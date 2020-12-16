@@ -110,8 +110,7 @@ class _TreeNode:
         return self.add_child(name, value=self._none)
 
     def add_child(self, name, value, warning=False):
-        r"""
-        If node does not exist or is a placeholder, create it,
+        r"""If node does not exist or is a placeholder, create it;
         otherwise skip and return the existing node.
         """
         child = self.get_child(name)
@@ -147,8 +146,7 @@ class _TreeNode:
         return self.get_child(key)
 
     def _add_child(self, node):
-        r"""
-        Add a child node into self.children.
+        r"""Add a child node into self.children.
         If the node already exists, just update its information.
         """
         self.children.update({
@@ -158,8 +156,7 @@ class _TreeNode:
         node.parent = self
 
     def apply(self, func):
-        r"""
-        Apply a callback function to ALL descendants.
+        r"""Apply a callback function to ALL descendants.
         This is useful for recursive traversal.
         """
         ret = [func(self)]
@@ -222,9 +219,7 @@ class _Tree:
         return self.root.apply(func)
 
     def get_node(self, tar, mode='name'):
-        r"""
-        This is different from a travasal in that this search allows early stop.
-        """
+        r"""This is different from a travasal in that this search allows early stop."""
         if mode not in ('name', 'path', 'val'):
             raise NotImplementedError("Invalid mode")
         if mode == 'path':
