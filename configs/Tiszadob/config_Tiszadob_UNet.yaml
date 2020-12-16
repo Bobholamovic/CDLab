@@ -1,0 +1,5 @@
+# Tiszadob+UNet
+
+model: UNet
+out_dir: UNet
+suffix_off: True
