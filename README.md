@@ -4,7 +4,7 @@ Yet another project for benchmarking deep learning-based remote sensing change d
 
 ## Visions
 
-+ Code more as a developer, or configurate more as a researcher.
++ Code more as a developer, or configure more as a researcher.
 + More free than a framework; more maintainable than a boilerplate.
 + Lightweight and fast.
 
