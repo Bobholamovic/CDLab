@@ -1,3 +1,6 @@
+# R. C. Daudt, B. Le Saux, A. Boulch and Y. Gousseau, "Urban Change Detection for Multispectral Earth Observation Using Convolutional Neural Networks," IGARSS 2018 - 2018 IEEE International Geoscience and Remote Sensing Symposium, Valencia, 2018, pp. 2115-2118, doi: 10.1109/IGARSS.2018.8518015.
+
+
 import os
 from glob import glob
 from os.path import join, basename
