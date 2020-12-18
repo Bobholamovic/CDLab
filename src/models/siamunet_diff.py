@@ -2,7 +2,6 @@
 # Daudt, R. C., Le Saux, B., & Boulch, A. "Fully convolutional siamese networks for change detection". In 2018 25th IEEE International Conference on Image Processing (ICIP) (pp. 4063-4067). IEEE.
 # with modifications (remove dropout layers, add residual connections, double number of channels, and change decoding blocks).
 
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

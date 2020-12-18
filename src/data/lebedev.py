@@ -1,6 +1,5 @@
 # Lebedev, M. A., Vizilter, Y. V., Vygolov, O. V., Knyaz, V. A., and Rubis, A. Y.: CHANGE DETECTION IN REMOTE SENSING IMAGES USING CONDITIONAL ADVERSARIAL NETWORKS, Int. Arch. Photogramm. Remote Sens. Spatial Inf. Sci., XLII-2, 565–571, https://doi.org/10.5194/isprs-archives-XLII-2-565-2018, 2018.
 
-
 from glob import glob
 from os.path import join, basename
 

@@ -1,7 +1,6 @@
 # Implementation of 
 # Alcantarilla, P. F., Stent, S., Ros, G., Arroyo, R., & Gherardi, R. (2018). Street-view change detection with deconvolutional networks. Autonomous Robots, 42(7), 1301–1322.
 
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

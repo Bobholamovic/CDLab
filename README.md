@@ -2,12 +2,6 @@
 
 Yet another project for benchmarking deep learning-based remote sensing change detection methods.
 
-## Visions
-
-+ Code more as a developer, or configure more as a researcher.
-+ More free than a framework; more maintainable than a boilerplate.
-+ Lightweight and fast.
-
 ## Prerequisites
 
 > opencv-python==4.1.1  
