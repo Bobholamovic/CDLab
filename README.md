@@ -20,7 +20,7 @@ Tested using Python 3.7.4 on Ubuntu 16.04.
 First clone this repo from github.
 
 ```bash
-git clone git@github.com:Bobholamovic/CDLab.git
+git clone --recurse-submodules git@github.com:Bobholamovic/CDLab.git
 cd CDLab
 mkdir exp
 cd src
