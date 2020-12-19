@@ -18,9 +18,13 @@ class AC_SzadaDataset(_AirChangeDataset):
         return 'Szada'
 
     @property
-    def TEST_SAMPLE_IDS(self):
-        return (0,)
-        
+    def TRAIN_SAMPLE_IDS(self):
+        return (2,3,4,5,6,)
+
     @property
-    def N_PAIRS(self):
-        return 7
+    def VAL_SAMPLE_IDS(self):
+        return (7,)
+
+    @property
+    def TEST_SAMPLE_IDS(self):
+        return (1,)

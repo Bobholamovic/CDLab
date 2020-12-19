@@ -18,9 +18,13 @@ class AC_TiszadobDataset(_AirChangeDataset):
         return 'Tiszadob'
 
     @property
-    def TEST_SAMPLE_IDS(self):
-        return (2,)
+    def TRAIN_SAMPLE_IDS(self):
+        return (1,2,5,)
 
     @property
-    def N_PAIRS(self):
-        return 5
+    def VAL_SAMPLE_IDS(self):
+        return (4,)
+
+    @property
+    def TEST_SAMPLE_IDS(self):
+        return (3,)

@@ -46,7 +46,7 @@ class CDDataset(DatasetBase):
         return default_loader(image_path)
 
     def get_name(self, index):
-        return splitext(basename(self.tar_list[index]))[0]+'.bmp'
+        return splitext(basename(self.tar_list[index]))[0]+'.png'
 
     def preprocess(self, t1, t2, tar):
         if self.transforms[0] is not None:

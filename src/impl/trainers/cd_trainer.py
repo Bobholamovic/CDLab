@@ -47,7 +47,7 @@ class CDTrainer(Trainer):
 
         # Whether to save network output
         self.out_dir = self.ctx['out_dir']
-        self.save = (self.ctx['save_on'] or self.out_dir) and not self.debug
+        self.save = self.ctx['save_on'] and not self.debug
 
         self.val_iters = self.ctx['val_iters']
             

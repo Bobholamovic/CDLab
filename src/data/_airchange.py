@@ -19,48 +19,46 @@ class _AirChangeDataset(CDDataset):
         subset='val'
     ):
         super().__init__(root, phase, transforms, repeats, subset)
-        self.cropper = Crop(bounds=(0, 0, 784, 448))
+        if self.phase == 'eval':
+            self._cropper = Crop(bounds=(0, 0, 784, 448))
 
     @property
     def LOCATION(self):
         return ''
 
     @property
-    def TEST_SAMPLE_IDS(self):
+    def TRAIN_SAMPLE_IDS(self):
         return ()
 
     @property
-    def N_PAIRS(self):
-        return 0
+    def VAL_SAMPLE_IDS(self):
+        return ()
+
+    @property
+    def TEST_SAMPLE_IDS(self):
+        return ()
 
     def _read_file_paths(self):
-        if self.subset == 'train':
-            sample_ids = [i for i in range(self.N_PAIRS) if i not in self.TEST_SAMPLE_IDS]
-            t1_list = [join(self.root, self.LOCATION, str(i+1), 'im1') for i in sample_ids]
-            t2_list = [join(self.root, self.LOCATION, str(i+1), 'im2') for i in sample_ids]
-            tar_list = [join(self.root, self.LOCATION, str(i+1), 'gt') for i in sample_ids]
-        else:
-            # val and test subsets are equal
-            t1_list = [join(self.root, self.LOCATION, str(i+1), 'im1') for i in self.TEST_SAMPLE_IDS]
-            t2_list = [join(self.root, self.LOCATION, str(i+1), 'im2') for i in self.TEST_SAMPLE_IDS]
-            tar_list = [join(self.root, self.LOCATION, str(i+1), 'gt') for i in self.TEST_SAMPLE_IDS]
-
+        sample_ids = getattr(self, self.subset.upper()+'_SAMPLE_IDS')
+        t1_list = [join(self.root, self.LOCATION, str(i), 'im1') for i in sample_ids]
+        t2_list = [join(self.root, self.LOCATION, str(i), 'im2') for i in sample_ids]
+        tar_list = [join(self.root, self.LOCATION, str(i), 'gt') for i in sample_ids]
         return t1_list, t2_list, tar_list
 
     # XXX: In a multi-process environment, there might be multiple caches in memory, each for one process.
-    @lru_cache(maxsize=16)
+    @lru_cache(maxsize=12)
     def fetch_image(self, image_name):
         image = self._bmp_loader(image_name)
-        return image if self.phase == 'train' else self.cropper(image)
+        return image if self.phase == 'train' else self._cropper(image)
 
     @lru_cache(maxsize=8)
     def fetch_target(self, target_name):
         tar = self._bmp_loader(target_name)
         tar = (tar > 0).astype(np.bool)    # To 0,1
-        return tar if self.phase == 'train' else self.cropper(tar)
+        return tar if self.phase == 'train' else self._cropper(tar)
 
     def get_name(self, index):
-        return '{loc}-{id}-cm.bmp'.format(loc=self.LOCATION, id=index)
+        return '{loc}-{id}-cm.png'.format(loc=self.LOCATION, id=index)
 
     @staticmethod
     def _bmp_loader(bmp_path_wo_ext):
