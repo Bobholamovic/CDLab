@@ -70,11 +70,6 @@ class CDTrainer_NLL(CDTrainer):
 
         with torch.no_grad():
             for i, (name, t1, t2, tar) in enumerate(pb):
-                if self.is_training and i >= self.val_iters:
-                    # This saves time
-                    pb.close()
-                    self.logger.warn("Evaluation ends early.")
-                    break
                 t1, t2, tar = t1.to(self.device), t2.to(self.device), tar.to(self.device)
                 
                 prob = self.model(t1, t2)

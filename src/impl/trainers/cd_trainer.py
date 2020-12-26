@@ -48,8 +48,6 @@ class CDTrainer(Trainer):
         # Whether to save network output
         self.out_dir = self.ctx['out_dir']
         self.save = self.ctx['save_on'] and not self.debug
-
-        self.val_iters = self.ctx['val_iters']
             
     def init_learning_rate(self):
         # Set learning rate adjustment strategy

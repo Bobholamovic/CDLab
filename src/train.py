@@ -38,7 +38,6 @@ def main():
         parser.add_argument('--step', type=int, default=200)
         parser.add_argument('--save_on', action='store_true')
         parser.add_argument('--out_dir', default='')
-        parser.add_argument('--val_iters', type=int, default=16)
 
         return parser
     args = parse_args(parser_configurator)
