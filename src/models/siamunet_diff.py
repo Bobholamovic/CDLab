@@ -13,7 +13,7 @@ class SiamUNet_diff(nn.Module):
     def __init__(self, in_ch, out_ch):
         super().__init__()
 
-        C = [32, 64, 128, 256, 512]
+        C = [32, 64, 128, 256]
 
         self.conv1 = ResBlock(in_ch, C[0])
         self.pool1 = MaxPool2x2()
