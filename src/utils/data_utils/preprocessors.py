@@ -9,12 +9,12 @@ __all__ = ['CenterCrop', 'Normalize']
 def _isseq(x): return isinstance(x, (tuple, list))
 
 
-class Preprocessor:
+class Preprocess:
     def _process(self, x):
         raise NotImplementedError
 
     def __call__(self, *args, copy=False):
-        # NOTE: A Preprocessor object deals with 2-D or 3-D numpy ndarrays only, with an optional third dim as the channel dim.
+        # NOTE: A Preprocess object deals with 2-D or 3-D numpy ndarrays only, with an optional third dim as the channel dim.
         if copy:
             args = deepcopy(args)
         return self._process(args[0]) if len(args) == 1 else tuple(self._process(x) for x in args)
@@ -23,7 +23,7 @@ class Preprocessor:
         return self.__class__.__name__
 
 
-class CenterCrop(Preprocessor):
+class CenterCrop(Preprocess):
     def __init__(self, crop_size):
         super().__init__()
         self.crop_size = crop_size if _isseq(crop_size) else (crop_size, crop_size)
@@ -45,7 +45,7 @@ class CenterCrop(Preprocessor):
         return super().__repr__()+"\ncrop_size={}".format(self.crop_size)
 
 
-class Normalize(Preprocessor):
+class Normalize(Preprocess):
     def __init__(self, mu=0.0, sigma=1.0, zscore=False, chn_wise=False):
         super().__init__()
         self.mu = mu
