@@ -89,7 +89,8 @@ class CDTrainer_NLL(CDTrainer):
                     desc += " {} {:.4f} ({:.4f})".format(m.__name__, m.val, m.avg)
 
                 pb.set_description(desc)
-                self.logger.dump(desc)
+                if not self.is_training or i % max(1, len_eval//10) == 0:
+                    self.logger.dump(desc)
 
                 if self.tb_on:
                     self.tb_writer.add_image("Eval/t1", t1[0], self.eval_step)
