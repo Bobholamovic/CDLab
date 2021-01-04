@@ -40,6 +40,7 @@ def main():
         parser.add_argument('--out_dir', default='')
 
         return parser
+        
     args = parse_args(parser_configurator)
 
     trainer = R['Trainer_switcher'](args)

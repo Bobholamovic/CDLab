@@ -39,7 +39,7 @@ class CDTrainer(Trainer):
                         os.rmdir(osp.join(root, d))
             self.tb_writer = SummaryWriter(tb_dir)
             self.logger.show_nl("\nTensorboard logdir: {}".format(osp.abspath(self.gpc.get_dir('tb'))))
-            self.tb_intvl = int(self.ctx['tb_intvl'])
+            self.tb_intvl = self.ctx['tb_intvl']
             
             # Global steps
             self.train_step = 0
