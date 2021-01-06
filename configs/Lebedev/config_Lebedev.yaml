@@ -6,7 +6,7 @@ dataset: Lebedev
 num_workers: 2
 repeats: 7
 subset: val
-crop_size: 200
+crop_size: 192
 
 
 # Optimizer

@@ -89,16 +89,18 @@ class CDTrainer_NLL(CDTrainer):
                     desc += " {} {:.4f} ({:.4f})".format(m.__name__, m.val, m.avg)
 
                 pb.set_description(desc)
-                if not self.is_training or i % max(1, len_eval//10) == 0:
+                dump = not self.is_training or (i % max(1, len_eval//10) == 0)
+                if dump:
                     self.logger.dump(desc)
 
                 if self.tb_on:
-                    self.tb_writer.add_image("Eval/t1", t1[0], self.eval_step)
-                    self.tb_writer.add_image("Eval/t2", t2[0], self.eval_step)
-                    self.tb_writer.add_image("Eval/labels", quantize(tar), self.eval_step, dataformats='HW')
-                    prob = quantize(to_array(torch.exp(prob[0,1])))
-                    self.tb_writer.add_image("Eval/prob", to_pseudo_color(prob), self.eval_step, dataformats='HWC')
-                    self.tb_writer.add_image("Eval/cm", quantize(cm), self.eval_step, dataformats='HW')
+                    if dump:
+                        self.tb_writer.add_image("Eval/t1", t1[0], self.eval_step)
+                        self.tb_writer.add_image("Eval/t2", t2[0], self.eval_step)
+                        self.tb_writer.add_image("Eval/labels", quantize(tar), self.eval_step, dataformats='HW')
+                        prob = quantize(to_array(torch.exp(prob[0,1])))
+                        self.tb_writer.add_image("Eval/prob", to_pseudo_color(prob), self.eval_step, dataformats='HWC')
+                        self.tb_writer.add_image("Eval/cm", quantize(cm), self.eval_step, dataformats='HW')
                     self.eval_step += 1
                 
                 if self.save:
