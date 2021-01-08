@@ -31,13 +31,13 @@ def main():
     def parser_configurator(parser):
         parser.add_argument('--crop_size', type=int, default=256, metavar='P', 
                             help="patch size (default: %(default)s)")
+        parser.add_argument('--sched_on', action='store_true')
         parser.add_argument('--tb_on', action='store_true')
         parser.add_argument('--tb_intvl', type=int, default=100)
         parser.add_argument('--suffix_off', action='store_true')
-        parser.add_argument('--lr_mode', type=str, default='const')
-        parser.add_argument('--step', type=int, default=200)
         parser.add_argument('--save_on', action='store_true')
         parser.add_argument('--out_dir', default='')
+        parser.add_argument('--weights', type=float, nargs='+', default=None)
 
         return parser
         

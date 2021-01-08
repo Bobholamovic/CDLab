@@ -1,5 +1,0 @@
-# OSCD+CDNet
-
-model: CDNet
-out_dir: CDNet
-suffix_off: True
