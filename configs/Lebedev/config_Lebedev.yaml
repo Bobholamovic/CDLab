@@ -43,7 +43,7 @@ tb_on: False
 tb_intvl: 15
 suffix_off: False
 save_on: False
-out_dir:
+out_dir: ''
 
 
 # Criterion
