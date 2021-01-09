@@ -325,11 +325,11 @@ class _ValueTransform(Transform):
             dtype = x.dtype
             # NOTE: The calculations are done with floating type to prevent overflow.
             # This is a simple yet stupid way.
-            # FIXME: Current implementation always makes a copy.
-            x = tf(obj, np.clip(x.astype(np.float32), *obj.limit), params)
+            x = x.astype(np.float32, copy=False)
+            x = tf(obj, np.clip(x, *obj.limit, out=x), params)
             # Convert back to the original type
             # TODO: Round instead of truncate if dtype is integer
-            return np.clip(x, *obj.limit).astype(dtype)
+            return np.clip(x, *obj.limit, out=x).astype(dtype, copy=False)
         return wrapper
         
 
