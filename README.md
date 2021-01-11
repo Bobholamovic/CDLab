@@ -49,10 +49,10 @@ python train.py train --exp_config PATH_TO_CONFIG_FILE --resume PATH_TO_CHECKPOI
 Some other optional arguments include:
 
 - `anew`: Add it if the checkpoint is just used to initialize model weights. Note that loading an incompatible checkpoint is supported as a feature, which is useful when you are trying to utilize a well pretrained model for finetuning.
-- `save_on`: By default, an epoch-based trainer is used for training. At the end of each training epoch, the trainer evaluates the model on the validation dataset. If you want to save the model output during validation, add this argument.
+- `save_on`: By default, an epoch-based trainer is used for training. At the end of each training epoch, the trainer evaluates the model on the validation dataset. If you want to save the model output during the evaluation process, add this argument.
 - `log_off`: Disable logging.
 - `tb_on`: Enable tensorboard summaries.
-- `debug_on`: Useful when you are debugging your own code. In debugging mode, no checkpoint or model output will be written to disk. In addition, a breakpoint will be set before the program exits if some unhandled exception occurs, which allows you to check variables in the stack or do some cleanup jobs.
+- `debug_on`: Useful when you are debugging your own code. In debugging mode, no checkpoint or model output will be written to disk. In addition, a breakpoint will be set where an unhandled exception occurs, which allows you to locate the causes of the crash or do some cleanup jobs.
 
 During or after the training process, you can check the model weight files in `exp/DATASET_NAME/weights/`, the log files in `exp/DATASET_NAME/logs`, and the output change maps in `exp/DATASET_NAME/out`.
 
