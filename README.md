@@ -1,6 +1,8 @@
 # Change Detection Laboratory
 
-Yet another project for benchmarking deep learning-based remote sensing change detection methods.
+Yet another project for developing and benchmarking deep learning-based remote sensing change detection methods.
+
+English | [简体中文](README_zh-CN.md)
 
 ## Prerequisites
 
@@ -17,7 +19,7 @@ Tested using Python 3.7.4 on Ubuntu 16.04.
 
 ## Get Started
 
-First clone this repo from github.
+First clone this repo from GitHub.
 
 ```bash
 git clone --recurse-submodules git@github.com:Bobholamovic/CDLab.git
@@ -85,3 +87,11 @@ Synthetic images and real season-varying remote sensing images | `Lebedev` | [so
 ## License
 
 This project is released under the [Unlicense](/LICENSE).
+
+## Development
+
+*This section currently lacks documentation.*
+
+## Contributing
+
+Any kind of contributions to improve this repository is welcome.

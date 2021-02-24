@@ -1,9 +1,9 @@
 # Global constants
 
 # Dataset locations
-IMDB_OSCD = "~/Datasets/OSCDDataset/"
-IMDB_AIRCHANGE = "~/Datasets/SZTAKI_AirChange_Benchmark/"
-IMDB_LEBEDEV = "~/Datasets/HR/ChangeDetectionDataset/"
+IMDB_OSCD = "~/data/OSCDDataset/"
+IMDB_AIRCHANGE = "~/data/SZTAKI_AirChange_Benchmark/"
+IMDB_LEBEDEV = "~/data/HR/ChangeDetectionDataset/"
 
 # Template strings
 CKP_LATEST = "checkpoint_latest.pth"
