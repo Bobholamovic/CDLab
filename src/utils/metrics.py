@@ -66,7 +66,7 @@ class Metric(AverageMeter):
             # Do not reduce size
             return self._calculate_metric(cm)
         elif self.reduction == 'mean':
-            # Micro averaging
+            # Macro averaging
             return self._calculate_metric(cm).mean()
         elif self.reduction == 'binary':
             # The pos_class be 1
