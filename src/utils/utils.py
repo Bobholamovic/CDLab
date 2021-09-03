@@ -103,7 +103,7 @@ class HookHelper:
                         )
                     )
         else:
-            raise NotImplementedError("Hook type is not implemented.")
+            raise RuntimeError("Hook type is not implemented.")
 
     def __exit__(self, exc_type, exc_val, ext_tb):
         for handle in self._handles:

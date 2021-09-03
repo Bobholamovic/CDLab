@@ -8,7 +8,7 @@ from utils.data_utils.misc import (
     quantize_8bit as quantize
 )
 from utils.utils import HookHelper
-from utils.metrics import (AverageMeter, Precision, Recall, Accuracy, F1Score)
+from utils.metrics import (Meter, Precision, Recall, Accuracy, F1Score)
 
 
 class CDTrainer_NLL(CDTrainer):
@@ -16,7 +16,7 @@ class CDTrainer_NLL(CDTrainer):
         super().__init__(settings['model'], settings['dataset'], settings['criterion'], settings['optimizer'], settings)
 
     def train_epoch(self, epoch):
-        losses = AverageMeter()
+        losses = Meter()
         len_train = len(self.train_loader)
         width = len(str(len_train))
         start_pattern = "[{{:>{0}}}/{{:>{0}}}]".format(width)
@@ -57,7 +57,7 @@ class CDTrainer_NLL(CDTrainer):
 
     def evaluate_epoch(self, epoch):
         self.logger.show_nl("Epoch: [{0}]".format(epoch))
-        losses = AverageMeter()
+        losses = Meter()
         len_eval = len(self.eval_loader)
         width = len(str(len_eval))
         start_pattern = "[{{:>{0}}}/{{:>{0}}}]".format(width)

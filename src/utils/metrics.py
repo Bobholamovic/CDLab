@@ -4,7 +4,7 @@ import numpy as np
 from sklearn import metrics
 
 
-class AverageMeter:
+class Meter:
     def __init__(self, callback=None, calc_avg=True):
         super().__init__()
         if callback is not None:
@@ -16,7 +16,7 @@ class AverageMeter:
         if len(args) == 1:
             return args[0]
         else:
-            raise NotImplementedError
+            raise ValueError
 
     def reset(self):
         self.val = 0
@@ -40,10 +40,10 @@ class AverageMeter:
 
 
 # These metrics only for numpy arrays
-class Metric(AverageMeter):
+class Metric(Meter):
     __name__ = 'Metric'
     def __init__(self, n_classes=2, mode='separ', reduction='binary'):
-        self._cm = AverageMeter(partial(metrics.confusion_matrix, labels=np.arange(n_classes)), False)
+        self._cm = Meter(partial(metrics.confusion_matrix, labels=np.arange(n_classes)), False)
         self.mode = mode
         if reduction == 'binary' and n_classes != 2:
             raise ValueError("Binary reduction only works in 2-class cases.")

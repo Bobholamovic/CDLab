@@ -30,7 +30,7 @@ def to_tensor(arr):
     elif arr.ndim == 3:
         return torch.from_numpy(np.transpose(arr, (2,0,1)))
     else:
-        raise NotImplementedError
+        raise ValueError
 
 
 def to_array(tensor):
@@ -40,7 +40,7 @@ def to_array(tensor):
             arr = np.moveaxis(arr, -3, -1)
         return arr
     else:
-        raise NotImplementedError
+        raise ValueError
 
 
 def normalize_minmax(x):
