@@ -66,6 +66,9 @@ class Normalize(Preprocess):
         else:
             mu = self.mu
             sigma = self.sigma
+        # dtype of output is determined by x, mu and sigma (when using python float type it is possibly np.float64)
+        # Out-of-place operations are used here to enable type promotions
+        # This is because we usually do not expect type preservation or data overflow from a *normalize* function
         return (x-mu) / sigma
 
     def __repr__(self):

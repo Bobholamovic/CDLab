@@ -42,7 +42,7 @@ class Transform:
         if copy:
             args = deepcopy(args)
         if rand() > self.prob_apply:
-            return args
+            return args[0] if len(args) == 1 else args
         if self._rand_state:
             params = self._get_rand_params()
         else:
@@ -112,7 +112,7 @@ class Scale(Transform):
         if size == (h,w):
             return x
         order = 1 if np.issubdtype(x.dtype, np.floating) else 0
-        return skimage.transform.resize(x, size, order=order, preserve_range=True).astype(x.dtype)
+        return skimage.transform.resize(x, size, order=order, preserve_range=True, anti_aliasing=False).astype(x.dtype)
 
     def _get_rand_params(self):
         return {'scale': uniform(*self.scale)}
@@ -325,7 +325,9 @@ class _ValueTransform(Transform):
             dtype = x.dtype
             # NOTE: The calculations are done with floating type to prevent overflow.
             # This is a simple yet stupid way.
-            x = x.astype(np.float32, copy=False)
+            if not np.can_cast(dtype, np.float64):
+                raise ValueError("dtype={} is not supported.".format(dtype))
+            x = x.astype(np.float64, copy=False)
             x = tf(obj, np.clip(x, *obj.limit, out=x), params)
             # Convert back to the original type
             # TODO: Round instead of truncate if dtype is integer
