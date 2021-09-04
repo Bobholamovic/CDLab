@@ -38,7 +38,7 @@ To train a model from scratch, use
 python train.py train --exp_config PATH_TO_CONFIG_FILE
 ```
 
-A few configuration files regarding different datasets and models are provided in the `configs/` folder for ease of use. *Note that the hyper-parameters are not elaborately tuned to obtain a fully optimized performance.*
+A few configuration files regarding different datasets and models are provided in the `configs/` folder for ease of use. *Note that the hyperparameters are not elaborately investigated to obtain a fully optimized performance.*
 
 As soon as the program starts and prints out the configurations, there will be a prompt asking you to write some notes. What you write will be recorded into the log file to help you remember what you did, or you can simply skip this step by pressing `Enter`.
 
