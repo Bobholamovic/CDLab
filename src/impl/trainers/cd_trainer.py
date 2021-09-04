@@ -1,10 +1,8 @@
 import os
 import os.path as osp
-from functools import partial
 
 import torch
 from torch.utils.tensorboard import SummaryWriter
-from torch.optim import lr_scheduler
 from skimage import io
 
 from core.trainer import Trainer

@@ -1,4 +1,3 @@
-import math
 from collections import OrderedDict
 
 import torch

@@ -1,6 +1,6 @@
 # C. Benedek and T. Sziranyi, "Change Detection in Optical Aerial Images by a Multilayer Conditional Mixed Markov Model," in IEEE Transactions on Geoscience and Remote Sensing, vol. 47, no. 10, pp. 3416-3430, Oct. 2009, doi: 10.1109/TGRS.2009.2022633.
 
-from os.path import join, basename
+from os.path import join
 from functools import lru_cache
 
 import numpy as np

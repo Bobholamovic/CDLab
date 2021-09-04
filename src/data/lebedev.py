@@ -5,7 +5,6 @@ from os.path import join, basename
 
 import numpy as np
 
-from utils.data_utils.misc import default_loader
 from . import CDDataset
 
 

@@ -3,8 +3,7 @@ from tqdm import tqdm
 
 from .cd_trainer import CDTrainer
 from utils.data_utils.misc import (
-    to_array, to_pseudo_color, 
-    normalize_8bit,
+    to_array, to_pseudo_color,
     quantize_8bit as quantize
 )
 from utils.utils import HookHelper
