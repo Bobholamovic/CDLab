@@ -49,3 +49,9 @@ def build_CDNet_model(C):
 def build_CDNet_OSCD_model(C):
     from models.cdnet import CDNet
     return CDNet(26, 2)
+
+
+@MODELS.register_func('I2V_model')
+def build_I2V_model(C):
+    from models.i2v import I2VNet
+    return I2VNet(3, 1)

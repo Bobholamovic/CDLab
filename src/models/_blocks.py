@@ -81,10 +81,10 @@ class DecBlock(nn.Module):
 
     def forward(self, x1, x2):
         x2 = self.deconv(x2)
-        pl = (x1.size(3)-x2.size(3))//2
-        pr = x1.size(3)-x2.size(3) - pl
-        pt = (x1.size(2)-x2.size(2))//2
-        pb = (x1.size(2)-x2.size(2)) - pt
+        pl = 0
+        pr = x1.size(3)-x2.size(3)
+        pt = 0
+        pb = (x1.size(2)-x2.size(2))
         x2 = F.pad(x2, (pl, pr, pt, pb), 'replicate')
         x = torch.cat((x1, x2), dim=1)
         x = self.conv_feat(x)

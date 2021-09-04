@@ -28,9 +28,9 @@ class CDTrainer_NLL(CDTrainer):
             
             show_imgs_on_tb = self.tb_on and (i%self.tb_intvl == 0)
             
-            prob = self.model(t1, t2)
+            pred = self.model(t1, t2)
             
-            loss = self.criterion(prob, tar)
+            loss = self.criterion(pred, tar)
             
             losses.update(loss.item(), n=self.batch_size)
 
@@ -71,13 +71,13 @@ class CDTrainer_NLL(CDTrainer):
             for i, (name, t1, t2, tar) in enumerate(pb):
                 t1, t2, tar = t1.to(self.device), t2.to(self.device), tar.to(self.device)
                 
-                prob = self.model(t1, t2)
+                pred = self.model(t1, t2)
 
-                loss = self.criterion(prob, tar)
+                loss = self.criterion(pred, tar)
                 losses.update(loss.item(), n=self.batch_size)
 
                 # Convert to numpy arrays
-                cm = to_array(torch.argmax(prob[0], 0)).astype('uint8')
+                cm = to_array(torch.argmax(pred[0], 0)).astype('uint8')
                 tar = to_array(tar[0]).astype('uint8')
 
                 for m in metrics:
@@ -97,7 +97,7 @@ class CDTrainer_NLL(CDTrainer):
                         self.tb_writer.add_image("Eval/t1", t1[0], self.eval_step)
                         self.tb_writer.add_image("Eval/t2", t2[0], self.eval_step)
                         self.tb_writer.add_image("Eval/labels", quantize(tar), self.eval_step, dataformats='HW')
-                        prob = quantize(to_array(torch.exp(prob[0,1])))
+                        prob = quantize(to_array(torch.exp(pred[0,1])))
                         self.tb_writer.add_image("Eval/prob", to_pseudo_color(prob), self.eval_step, dataformats='HWC')
                         self.tb_writer.add_image("Eval/cm", quantize(cm), self.eval_step, dataformats='HW')
                     self.eval_step += 1
