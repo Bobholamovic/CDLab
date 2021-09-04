@@ -172,7 +172,7 @@ class I2VTrainer(CDTrainer):
             assert not norm_tf.zscore
             return lambda x: x * norm_tf.sigma + norm_tf.mu
 
-        transforms = self.train_loader.dataset.transforms[1] if self.is_training else self.eval_loader.dataset.transforms[1]
+        transforms = self.eval_loader.dataset.transforms[1]
         if isinstance(transforms, Compose):
             norm_tfs = filter(lambda tf: isinstance(tf, Normalize), transforms.tfs)
             try:
@@ -180,7 +180,7 @@ class I2VTrainer(CDTrainer):
             except StopIteration:
                 raise ValueError
             denorm_func = _make_denorm_func(norm_tf)
-            if next(norm_tf, None) is not None:
+            if next(norm_tfs, None) is not None:
                 raise ValueError
         elif isinstance(transforms, Normalize):
             denorm_func = _make_denorm_func(transforms)
