@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 from scipy.io import loadmat
 from skimage.io import imread
+from imageio import mimsave
 
 
 def default_loader(path_):
@@ -19,6 +20,10 @@ def make_onehot(index_map, n):
     z = torch.zeros(n, *old_size[-2:]).type_as(index_map)
     z.scatter_(0, index_map, 1)
     return z
+
+
+def save_gif(uri, img_seq):
+    mimsave(uri, img_seq)
     
 
 def to_tensor(arr):

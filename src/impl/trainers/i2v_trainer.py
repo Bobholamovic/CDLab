@@ -1,12 +1,16 @@
+import os.path as osp
+import operator
+
 import torch
 from tqdm import tqdm
 
 from .cd_trainer import CDTrainer
 from utils.data_utils.misc import (
     to_array, to_pseudo_color,
-    quantize_8bit as quantize
+    quantize_8bit as quantize,
+    save_gif
 )
-from utils.utils import HookHelper
+from utils.utils import HookHelper, FeatureContainer
 from utils.metrics import (Meter, Precision, Recall, Accuracy, F1Score)
 from utils.data_utils.augmentations import Compose
 from utils.data_utils.preprocessors import Normalize
@@ -106,7 +110,20 @@ class I2VTrainer(CDTrainer):
                 t1, t2, tar = t1.to(self.device), t2.to(self.device), tar.to(self.device)
                 tar = tar.float()
                 
-                pred_i, pred_v = self.model(t1, t2)
+                if self.tb_on or self.save:
+                    feats = FeatureContainer()
+                    fetch_dict_fi = {
+                        'video_stage': 'frames'
+                    }
+                    fetch_dict_fo = {
+                        'conv_factor': 'factor'
+                    }
+                    with HookHelper(self.model, fetch_dict_fi, feats, 'forward_in'), \
+                        HookHelper(self.model, fetch_dict_fo, feats, 'forward_out'):
+                        pred_i, pred_v = self.model(t1, t2)
+                else:
+                    pred_i, pred_v = self.model(t1, t2)
+
                 pred_i = pred_i.squeeze(1)
                 pred_v = pred_v.squeeze(1)
 
@@ -152,10 +169,15 @@ class I2VTrainer(CDTrainer):
                         prob_v = quantize(to_array(torch.sigmoid(pred_v)))
                         self.tb_writer.add_image("Eval/prob_v", to_pseudo_color(prob_v), self.eval_step, dataformats='HWC')
                         self.tb_writer.add_image("Eval/cm_v", quantize(cm_v), self.eval_step, dataformats='HW')
+                        factor = quantize(to_array(feats['factor'][0][0]))
+                        self.tb_writer.add_image("Eval/factor", to_pseudo_color(factor), self.eval_step, dataformats='HWC')
                     self.eval_step += 1
                 
                 if self.save:
                     self.save_image(name[0], quantize(cm_v), epoch)
+                    frames = feats['frames'][0][0].transpose(0,1)
+                    frames = list(map(operator.methodcaller('astype', 'uint8'), map(self.denorm, map(to_array, frames))))
+                    self.save_gif(name[0], frames, epoch)
 
         if self.tb_on:
             self.tb_writer.add_scalar("Eval/loss", losses.avg, self.eval_step)
@@ -187,3 +209,17 @@ class I2VTrainer(CDTrainer):
         else:
             raise ValueError
         return denorm_func(x)
+
+    def save_gif(self, file_name, images, epoch):
+        file_path = osp.join(
+            'epoch_{}'.format(epoch),
+            self.out_dir,
+            osp.splitext(file_name)[0]+'.gif'
+        )
+        out_path = self.path(
+            'out', file_path,
+            suffix=not self.ctx['suffix_off'],
+            auto_make=True,
+            underline=True
+        )
+        return save_gif(out_path, images)
