@@ -49,7 +49,7 @@ class VideoSegModel(nn.Module):
 
 
 class I2VNet(nn.Module):
-    def __init__(self, in_ch, out_ch, video_len=8):
+    def __init__(self, in_ch, out_ch, itm_ch=32, video_len=8):
         super().__init__()
         self.video_len = video_len
         if self.video_len < 2:
@@ -58,11 +58,12 @@ class I2VNet(nn.Module):
             encoder_name='efficientnet-b3',
             encoder_weights='imagenet',
             in_channels=2*in_ch,
-            classes=32
+            classes=itm_ch
         )
-        self.image_head = Conv3x3(32, out_ch)
+        self.image_head = Conv3x3(itm_ch, out_ch)
         self.conv_factor = nn.Sequential(
-            Conv3x3(32, out_ch),
+            Conv3x3(itm_ch+2*in_ch, itm_ch, bn=True, act=True),
+            Conv3x3(itm_ch, 1),
             nn.Sigmoid()
         )
         self.video_stage = VideoSegModel(in_ch, dec_chs=(256,128,64,32))
@@ -70,7 +71,7 @@ class I2VNet(nn.Module):
     
     def forward(self, t1, t2):
         out_i = self.image_stage(torch.cat([t1,t2], dim=1))
-        factor = self.conv_factor(out_i)
+        factor = self.conv_factor(torch.cat([out_i,t1,t2], dim=1))
         pred_i = self.image_head(out_i)
         frames = self.image_to_video(t1, t2, factor)
         out_v = self.video_stage(frames.transpose(1,2))
