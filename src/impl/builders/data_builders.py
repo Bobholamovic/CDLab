@@ -210,7 +210,7 @@ def build_Lebedev_I2V_eval_dataset(C):
     configs = get_common_eval_configs(C)
     configs.update(dict(
         transforms=(Compose(
-            Crop(C['crop_size']),
+            Resize((224,224)),
         ), Normalize(mu=np.array([123.675, 116.28, 103.53]), sigma=np.array([58.395, 57.12, 57.375])), None),
         root=constants.IMDB_LEBEDEV,
         sets=('real',)
