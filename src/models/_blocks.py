@@ -11,7 +11,8 @@ class BasicConv(nn.Module):
     def __init__(self, in_ch, out_ch, kernel, pad='zero', bn=False, act=False, **kwargs):
         super().__init__()
         self.seq = nn.Sequential()
-        self.seq.add_module('_pad', getattr(nn, pad.capitalize()+'Pad2d')(kernel//2))
+        if kernel>=2:
+            self.seq.add_module('_pad', getattr(nn, pad.capitalize()+'Pad2d')(kernel//2))
         self.seq.add_module('_conv', nn.Conv2d(
             in_ch, out_ch, kernel,
             stride=1, padding=0,

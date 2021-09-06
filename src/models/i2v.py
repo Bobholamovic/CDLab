@@ -3,31 +3,44 @@ import torch.nn as nn
 import torch.nn.functional as F
 import segmentation_models_pytorch as smp
 from torchvision import models
+from torchvision.models import video
 
-from ._blocks import DecBlock, ResBlock, Conv3x3
+from ._blocks import DecBlock, ResBlock, Conv3x3, BasicConv
 
 
 class VideoDecoder(nn.Module):
-    def __init__(self, enc_chs=(64,64,128,256,512), dec_chs=(256,128,64,32)):
+    def __init__(self, enc_chs, dec_chs, tem_lens, alpha):
         super().__init__()
         if not len(enc_chs) == len(dec_chs)+1:
             raise ValueError
         enc_chs = enc_chs[::-1]
-        self.bottom = ResBlock(enc_chs[0], enc_chs[0])
+        tem_lens = tem_lens[::-1]
+
+        slim_chs = tuple(map(lambda ch: int(ch*alpha), enc_chs))
+        self.conv_video = nn.ModuleList(
+            [
+                BasicConv(tem_len*fch, sch, 1, bn=True, act=True)
+                for tem_len, fch, sch in zip(tem_lens, enc_chs, slim_chs)
+            ]
+        )
         self.blocks = nn.ModuleList([
             DecBlock(in_ch1, in_ch2, out_ch)
-            for in_ch1, in_ch2, out_ch in zip(enc_chs[1:], (enc_chs[0],)+dec_chs[:-1], dec_chs)
+            for in_ch1, in_ch2, out_ch in zip(slim_chs[1:], (slim_chs[0],)+dec_chs[:-1], dec_chs)
         ])
     
     def forward(self, *feats):
         feats = feats[::-1]
-        x = self.bottom(feats[0].mean(2))
-        for i, (blk, f) in enumerate(zip(self.blocks, feats[1:])):
-            x = blk(f.mean(2), x)
+        x = self.conv_video[0](self.flatten_video(feats[0]))
+        for i, (blk, conv, f) in enumerate(zip(self.blocks, self.conv_video[1:], feats[1:])):
+            x = blk(conv(self.flatten_video(f)), x)
         return x
 
+    def flatten_video(self, f):
+        return f.flatten(1,2)
+
+
 class VideoSegModel(nn.Module):
-    def __init__(self, in_ch, dec_chs):
+    def __init__(self, in_ch, enc_chs, dec_chs, tem_lens, alpha):
         super().__init__()
         if in_ch != 3:
             raise ValueError
@@ -35,11 +48,16 @@ class VideoSegModel(nn.Module):
         self.encoder = models.video.r3d_18(pretrained=True)
         self.encoder.fc = nn.Identity()
         # Decoder
-        self.decoder = VideoDecoder(dec_chs=dec_chs)
+        self.decoder = VideoDecoder(
+            enc_chs=enc_chs, 
+            dec_chs=dec_chs, 
+            tem_lens=tem_lens, 
+            alpha=alpha
+        )
 
     def forward(self, x):
+        feats = [x]
         x = self.encoder.stem(x)
-        feats = [F.interpolate(x, scale_factor=2, mode='nearest')]
         for i in range(4):
             layer = getattr(self.encoder, f'layer{i+1}')
             x = layer(x)
@@ -66,7 +84,13 @@ class I2VNet(nn.Module):
             Conv3x3(itm_ch, 1),
             nn.Sigmoid()
         )
-        self.video_stage = VideoSegModel(in_ch, dec_chs=(256,128,64,32))
+        self.video_stage = VideoSegModel(
+            in_ch, 
+            enc_chs=(in_ch,64,128,256,512),
+            dec_chs=(256,128,64,32), 
+            tem_lens=tuple(int(video_len*s) for s in (1,1,0.5,0.25,0.125)), 
+            alpha=0.5
+        )
         self.video_head = Conv3x3(32, out_ch)
     
     def forward(self, t1, t2):
