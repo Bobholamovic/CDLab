@@ -16,7 +16,7 @@ class VideoDecoder(nn.Module):
         enc_chs = enc_chs[::-1]
         tem_lens = tem_lens[::-1]
 
-        slim_chs = tuple(map(lambda ch: int(ch*alpha), enc_chs))
+        slim_chs = enc_chs[0:1]+tuple(map(lambda ch: int(ch*alpha), enc_chs[1:]))
         self.conv_video = nn.ModuleList(
             [
                 BasicConv(tem_len*fch, sch, 1, bn=True, act=True)
@@ -67,7 +67,7 @@ class VideoSegModel(nn.Module):
 
 
 class I2VNet(nn.Module):
-    def __init__(self, in_ch, out_ch, itm_ch=32, video_len=8):
+    def __init__(self, in_ch, out_ch, itm_ch=16, video_len=8):
         super().__init__()
         self.video_len = video_len
         if self.video_len < 2:
@@ -75,10 +75,12 @@ class I2VNet(nn.Module):
         self.image_stage = smp.Unet(
             encoder_name='efficientnet-b3',
             encoder_weights='imagenet',
+            encoder_depth=3,
+            decoder_channels=[64,32,16],
             in_channels=2*in_ch,
             classes=itm_ch
         )
-        self.image_head = Conv3x3(itm_ch, out_ch)
+        self.image_head = BasicConv(itm_ch, out_ch, 1)
         self.conv_factor = nn.Sequential(
             Conv3x3(itm_ch+2*in_ch, itm_ch, bn=True, act=True),
             Conv3x3(itm_ch, 1),
@@ -91,7 +93,7 @@ class I2VNet(nn.Module):
             tem_lens=tuple(int(video_len*s) for s in (1,1,0.5,0.25,0.125)), 
             alpha=0.5
         )
-        self.video_head = Conv3x3(32, out_ch)
+        self.video_head = BasicConv(32, out_ch, 1)
     
     def forward(self, t1, t2):
         out_i = self.image_stage(torch.cat([t1,t2], dim=1))
