@@ -17,3 +17,9 @@ def build_WeightedBCE_critn(C):
     assert len(C['weights']) == 2
     pos_weight = C['weights'][1]/C['weights'][0]
     return nn.BCEWithLogitsLoss(pos_weight=torch.Tensor([pos_weight]))
+
+
+@CRITNS.register_func('CC_critn')
+def build_CrossConsistencyLoss_critn(C):
+    from utils.losses import CCLoss
+    return CCLoss()

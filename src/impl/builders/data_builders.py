@@ -218,3 +218,29 @@ def build_Lebedev_I2V_eval_dataset(C):
 
     from data.lebedev import LebedevDataset
     return build_eval_dataloader(LebedevDataset, configs)
+
+
+@DATA.register_func('Lebedev_CiDL_train_dataset')
+def build_Lebedev_CiDL_train_dataset(C):
+    configs = get_common_train_configs(C)
+    configs.update(dict(
+        transforms=(None, Normalize(127.5, 127.5), None),
+        root=constants.IMDB_LEBEDEV,
+        sets=('real',)
+    ))
+
+    from data.lebedev import LebedevDataset
+    return build_train_dataloader(LebedevDataset, configs, C)
+
+
+@DATA.register_func('Lebedev_CiDL_eval_dataset')
+def build_Lebedev_CiDL_eval_dataset(C):
+    configs = get_common_eval_configs(C)
+    configs.update(dict(
+        transforms=(None, Normalize(127.5, 127.5), None),
+        root=constants.IMDB_LEBEDEV,
+        sets=('real',)
+    ))
+
+    from data.lebedev import LebedevDataset
+    return build_eval_dataloader(LebedevDataset, configs)
