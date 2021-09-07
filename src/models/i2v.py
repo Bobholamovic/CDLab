@@ -67,22 +67,20 @@ class VideoSegModel(nn.Module):
 
 
 class I2VNet(nn.Module):
-    def __init__(self, in_ch, out_ch, itm_ch=16, video_len=8):
+    def __init__(self, in_ch, out_ch, itm_ch=32, video_len=8):
         super().__init__()
         self.video_len = video_len
         if self.video_len < 2:
             raise ValueError
         self.image_stage = smp.Unet(
-            encoder_name='efficientnet-b3',
+            encoder_name='efficientnet-b0',
             encoder_weights='imagenet',
-            encoder_depth=3,
-            decoder_channels=[64,32,16],
             in_channels=2*in_ch,
             classes=itm_ch
         )
         self.image_head = BasicConv(itm_ch, out_ch, 1)
         self.conv_factor = nn.Sequential(
-            Conv3x3(itm_ch+2*in_ch, itm_ch, bn=True, act=True),
+            Conv3x3(itm_ch+2*in_ch, itm_ch),
             Conv3x3(itm_ch, 1),
             nn.Sigmoid()
         )
@@ -102,7 +100,7 @@ class I2VNet(nn.Module):
         frames = self.image_to_video(t1, t2, factor)
         out_v = self.video_stage(frames.transpose(1,2))
         pred_v = self.video_head(out_v)
-        return pred_i, pred_v
+        return pred_i, pred_i+pred_v
 
     def image_to_video(self, im1, im2, factor_map):
         delta = 1.0/(self.video_len-1)

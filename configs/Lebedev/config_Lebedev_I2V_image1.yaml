@@ -1,0 +1,20 @@
+# Lebedev+I2V
+
+model: I2V
+out_dir: I2V
+suffix_off: True
+
+lambda_i: 1.0
+lambda_v: 1.0
+criterion: WBCE+WBCE
+threshold: 0.5
+
+num_workers: 4
+crop_size: 224
+lr: 0.0001
+batch_size: 8
+num_epochs: 15
+schedulers:
+  - name: StepLR
+    step_size: 5
+    gamma: 0.5
