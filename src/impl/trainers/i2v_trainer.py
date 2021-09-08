@@ -20,19 +20,16 @@ class I2VTrainer(CDTrainer):
     def __init__(self, settings):
         assert settings['model'] == 'I2V'
         super().__init__(settings['model'], settings['dataset'], settings['criterion'], settings['optimizer'], settings)
-        self.lambda_i = settings['lambda_i']
-        self.lambda_v = settings['lambda_v']
+        self.k_train = settings['k_train']
+        self.k_test = settings['k_test']
         self.thresh = settings['threshold']
 
     def train_epoch(self, epoch):
         losses = Meter()
-        losses_i, losses_v = Meter(), Meter()
         len_train = len(self.train_loader)
         width = len(str(len_train))
         start_pattern = "[{{:>{0}}}/{{:>{0}}}]".format(width)
         pb = tqdm(self.train_loader)
-
-        critn_i, critn_v = self.criterion
         
         self.model.train()
         
@@ -42,28 +39,18 @@ class I2VTrainer(CDTrainer):
             
             show_imgs_on_tb = self.tb_on and (i%self.tb_intvl == 0)
             
-            pred_i, pred_v = self.model(t1, t2)
-            pred_i = pred_i.squeeze(1)
-            pred_v = pred_v.squeeze(1)
+            preds = self.model(t1, t2, self.k_train)
             
-            loss_i = critn_i(pred_i, tar)
-            loss_v = critn_v(pred_v, tar)
-            loss = loss_i * self.lambda_i + loss_v * self.lambda_v
-            losses_i.update(loss_i.item(), n=self.batch_size)
-            losses_v.update(loss_v.item(), n=self.batch_size)
-            losses.update(loss.item(), n=self.batch_size)
-            
+            loss = sum(self.criterion(pred.squeeze(1), tar) for pred in preds)
             losses.update(loss.item(), n=self.batch_size)
 
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
 
-            desc = (start_pattern+" Loss: {:.4f} ({:.4f}) Loss_i: {:.4f} ({:.4f}) Loss_v: {:.4f} ({:.4f})").format(
+            desc = (start_pattern+" Loss: {:.4f} ({:.4f})").format(
                     i+1, len_train, 
-                    losses.val, losses.avg,
-                    losses_i.val, losses_i.avg,
-                    losses_v.val, losses_v.avg
+                    losses.val, losses.avg
                 )
 
             pb.set_description(desc)
@@ -73,8 +60,6 @@ class I2VTrainer(CDTrainer):
             if self.tb_on:
                 # Write to tensorboard
                 self.tb_writer.add_scalar("Train/running_loss", losses.val, self.train_step)
-                self.tb_writer.add_scalar("Train/running_loss_i", losses_i.val, self.train_step)
-                self.tb_writer.add_scalar("Train/running_loss_v", losses_v.val, self.train_step)
                 if show_imgs_on_tb:
                     t1 = self.denorm(to_array(t1.detach()[0])).astype('uint8')
                     t2 = self.denorm(to_array(t2.detach()[0])).astype('uint8')
@@ -86,13 +71,10 @@ class I2VTrainer(CDTrainer):
             
         if self.tb_on:
             self.tb_writer.add_scalar("Train/loss", losses.avg, self.train_step)
-            self.tb_writer.add_scalar("Train/loss_i", losses_i.avg, self.train_step)
-            self.tb_writer.add_scalar("Train/loss_v", losses_v.avg, self.train_step)
 
     def evaluate_epoch(self, epoch):
         self.logger.show_nl("Epoch: [{0}]".format(epoch))
         losses = Meter()
-        losses_i, losses_v = Meter(), Meter()
         len_eval = len(self.eval_loader)
         width = len(str(len_eval))
         start_pattern = "[{{:>{0}}}/{{:>{0}}}]".format(width)
@@ -100,8 +82,6 @@ class I2VTrainer(CDTrainer):
 
         # Construct metrics
         metrics = (Precision(), Recall(), F1Score(), Accuracy())
-
-        critn_i, critn_v = self.criterion
 
         self.model.eval()
 
@@ -113,40 +93,32 @@ class I2VTrainer(CDTrainer):
                 if self.tb_on or self.save:
                     feats = FeatureContainer()
                     fetch_dict_fi = {
-                        'video_stage': 'frames'
+                        'seg_video': 'frames'
                     }
                     fetch_dict_fo = {
-                        'conv_factor': 'factor'
+                        'act_factor': 'factor'
                     }
                     with HookHelper(self.model, fetch_dict_fi, feats, 'forward_in'), \
                         HookHelper(self.model, fetch_dict_fo, feats, 'forward_out'):
-                        pred_i, pred_v = self.model(t1, t2)
+                        preds = self.model(t1, t2, self.k_test)
                 else:
-                    pred_i, pred_v = self.model(t1, t2)
+                    preds = self.model(t1, t2, self.k_test)
 
-                pred_i = pred_i.squeeze(1)
-                pred_v = pred_v.squeeze(1)
+                pred = preds[-1].squeeze(1)
 
-                loss_i = critn_i(pred_i, tar)
-                loss_v = critn_v(pred_v, tar)
-                loss = loss_i * self.lambda_i + loss_v * self.lambda_v
-                losses_i.update(loss_i.item(), n=self.batch_size)
-                losses_v.update(loss_v.item(), n=self.batch_size)
+                loss = sum(self.criterion(pred.squeeze(1), tar) for pred in preds)
                 losses.update(loss.item(), n=self.batch_size)
 
                 # Convert to numpy arrays
-                cm_i = to_array(torch.sigmoid(pred_i[0])>self.thresh).astype('uint8')
-                cm_v = to_array(torch.sigmoid(pred_v[0])>self.thresh).astype('uint8')
+                cm = to_array(torch.sigmoid(pred[0])>self.thresh).astype('uint8')
                 tar = to_array(tar[0]).astype('uint8')
 
                 for m in metrics:
-                    m.update(cm_v, tar)
+                    m.update(cm, tar)
 
-                desc = (start_pattern+" Loss: {:.4f} ({:.4f}) Loss_i: {:.4f} ({:.4f}) Loss_v: {:.4f} ({:.4f})").format(
+                desc = (start_pattern+" Loss: {:.4f} ({:.4f})").format(
                     i+1, len_eval, 
-                    losses.val, losses.avg,
-                    losses_i.val, losses_i.avg,
-                    losses_v.val, losses_v.avg
+                    losses.val, losses.avg
                 )
                 for m in metrics:
                     desc += " {} {:.4f} ({:.4f})".format(m.__name__, m.val, m.avg)
@@ -155,7 +127,7 @@ class I2VTrainer(CDTrainer):
                 dump = not self.is_training or (i % max(1, len_eval//10) == 0)
                 if dump:
                     self.logger.dump(desc)
-
+                
                 if self.tb_on:
                     if dump:
                         t1 = self.denorm(to_array(t1[0])).astype('uint8')
@@ -163,26 +135,24 @@ class I2VTrainer(CDTrainer):
                         self.tb_writer.add_image("Eval/t1", t1, self.eval_step, dataformats='HWC')
                         self.tb_writer.add_image("Eval/t2", t2, self.eval_step, dataformats='HWC')
                         self.tb_writer.add_image("Eval/labels", quantize(tar), self.eval_step, dataformats='HW')
-                        prob_i = quantize(to_array(torch.sigmoid(pred_i)))
-                        self.tb_writer.add_image("Eval/prob_i", to_pseudo_color(prob_i), self.eval_step, dataformats='HWC')
-                        self.tb_writer.add_image("Eval/cm_i", quantize(cm_i), self.eval_step, dataformats='HW')
-                        prob_v = quantize(to_array(torch.sigmoid(pred_v)))
-                        self.tb_writer.add_image("Eval/prob_v", to_pseudo_color(prob_v), self.eval_step, dataformats='HWC')
-                        self.tb_writer.add_image("Eval/cm_v", quantize(cm_v), self.eval_step, dataformats='HW')
-                        factor = quantize(to_array(feats['factor'][0][0]))
-                        self.tb_writer.add_image("Eval/factor", to_pseudo_color(factor), self.eval_step, dataformats='HWC')
+                        prob = quantize(to_array(torch.sigmoid(pred)))
+                        self.tb_writer.add_image("Eval/prob", to_pseudo_color(prob), self.eval_step, dataformats='HWC')
+                        self.tb_writer.add_image("Eval/cm", quantize(cm), self.eval_step, dataformats='HW')
+                        if 'factor' in feats.keys():
+                            for j in range(len(feats['factor'])):
+                                factor = quantize(to_array(feats['factor'][j][0]))
+                                self.tb_writer.add_image("Eval/factor_{}".format(j+1), to_pseudo_color(factor), self.eval_step, dataformats='HWC')
                     self.eval_step += 1
                 
                 if self.save:
-                    self.save_image(name[0], quantize(cm_v), epoch)
-                    frames = feats['frames'][0][0].transpose(0,1)
-                    frames = list(map(operator.methodcaller('astype', 'uint8'), map(self.denorm, map(to_array, frames))))
-                    self.save_gif(name[0], frames, epoch)
+                    self.save_image(name[0], quantize(cm), epoch)
+                    if 'frames' in feats.keys():
+                        frames = feats['frames'][-1][0].transpose(0,1)  # Show last iteration
+                        frames = list(map(operator.methodcaller('astype', 'uint8'), map(self.denorm, map(to_array, frames))))
+                        self.save_gif(name[0], frames, epoch)
 
         if self.tb_on:
             self.tb_writer.add_scalar("Eval/loss", losses.avg, self.eval_step)
-            self.tb_writer.add_scalar("Eval/loss_i", losses_i.avg, self.eval_step)
-            self.tb_writer.add_scalar("Eval/loss_v", losses_v.avg, self.eval_step)
             self.tb_writer.add_scalars("Eval/metrics", {m.__name__.lower(): m.avg for m in metrics}, self.eval_step)
             self.tb_writer.flush()
 

@@ -1,4 +1,0 @@
-# Lebedev+I2V(video only)
-
-out_dir: I2V_videoonly
-lambda_i: 0.0

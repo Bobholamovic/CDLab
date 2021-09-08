@@ -196,7 +196,7 @@ def build_Lebedev_I2V_train_dataset(C):
             Scale([0.9, 3.0]),
             Shift(),),
             Crop(C['crop_size']),
-        ), Normalize(mu=np.array([123.675, 116.28, 103.53]), sigma=np.array([58.395, 57.12, 57.375])), None),
+        ), Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
         root=constants.IMDB_LEBEDEV,
         sets=('real',)
     ))
@@ -211,7 +211,7 @@ def build_Lebedev_I2V_eval_dataset(C):
     configs.update(dict(
         transforms=(Compose(
             Resize((224,224)),
-        ), Normalize(mu=np.array([123.675, 116.28, 103.53]), sigma=np.array([58.395, 57.12, 57.375])), None),
+        ), Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
         root=constants.IMDB_LEBEDEV,
         sets=('real',)
     ))

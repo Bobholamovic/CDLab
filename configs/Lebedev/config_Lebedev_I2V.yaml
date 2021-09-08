@@ -4,9 +4,9 @@ model: I2V
 out_dir: I2V
 suffix_off: True
 
-lambda_i: 0.5
-lambda_v: 1.0
-criterion: WBCE+WBCE
+k_train: 2
+k_test: 2
+criterion: WBCE
 threshold: 0.5
 
 num_workers: 4

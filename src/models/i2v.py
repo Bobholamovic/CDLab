@@ -1,9 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import segmentation_models_pytorch as smp
 from torchvision import models
-from torchvision.models import video
 
 from ._blocks import DecBlock, ResBlock, Conv3x3, BasicConv
 
@@ -27,20 +25,22 @@ class VideoDecoder(nn.Module):
             DecBlock(in_ch1, in_ch2, out_ch)
             for in_ch1, in_ch2, out_ch in zip(slim_chs[1:], (slim_chs[0],)+dec_chs[:-1], dec_chs)
         ])
+        self.conv_out = BasicConv(dec_chs[-1], 1, 1)
     
     def forward(self, *feats):
         feats = feats[::-1]
         x = self.conv_video[0](self.flatten_video(feats[0]))
-        for i, (blk, conv, f) in enumerate(zip(self.blocks, self.conv_video[1:], feats[1:])):
+        for blk, conv, f in zip(self.blocks, self.conv_video[1:], feats[1:]):
             x = blk(conv(self.flatten_video(f)), x)
-        return x
+        y = self.conv_out(x)
+        return y
 
     def flatten_video(self, f):
         return f.flatten(1,2)
 
 
 class VideoSegModel(nn.Module):
-    def __init__(self, in_ch, enc_chs, dec_chs, tem_lens, alpha):
+    def __init__(self, in_ch, dec_chs, video_len):
         super().__init__()
         if in_ch != 3:
             raise ValueError
@@ -48,11 +48,13 @@ class VideoSegModel(nn.Module):
         self.encoder = models.video.r3d_18(pretrained=True)
         self.encoder.fc = nn.Identity()
         # Decoder
+        enc_chs=(in_ch,64,128,256,512)
+        tem_lens=tuple(int(video_len*s) for s in (1,1,0.5,0.25,0.125))
         self.decoder = VideoDecoder(
             enc_chs=enc_chs, 
             dec_chs=dec_chs, 
             tem_lens=tem_lens, 
-            alpha=alpha
+            alpha=0.5
         )
 
     def forward(self, x):
@@ -66,41 +68,39 @@ class VideoSegModel(nn.Module):
         return out
 
 
+class SigmoidBeta(nn.Sigmoid):
+    def __init__(self, beta, *args, **kwargs):
+        self.beta = beta
+        super().__init__(*args, **kwargs)
+
+    def forward(self, x):
+        return super().forward(self.beta*x)
+
+
 class I2VNet(nn.Module):
-    def __init__(self, in_ch, out_ch, itm_ch=32, video_len=8):
+    def __init__(self, in_ch, video_len=8):
         super().__init__()
         self.video_len = video_len
         if self.video_len < 2:
             raise ValueError
-        self.image_stage = smp.Unet(
-            encoder_name='efficientnet-b0',
-            encoder_weights='imagenet',
-            in_channels=2*in_ch,
-            classes=itm_ch
-        )
-        self.image_head = BasicConv(itm_ch, out_ch, 1)
-        self.conv_factor = nn.Sequential(
-            Conv3x3(itm_ch+2*in_ch, itm_ch),
-            Conv3x3(itm_ch, 1),
-            nn.Sigmoid()
-        )
-        self.video_stage = VideoSegModel(
+        self.seg_video = VideoSegModel(
             in_ch, 
-            enc_chs=(in_ch,64,128,256,512),
             dec_chs=(256,128,64,32), 
-            tem_lens=tuple(int(video_len*s) for s in (1,1,0.5,0.25,0.125)), 
-            alpha=0.5
+            video_len=video_len
         )
-        self.video_head = BasicConv(32, out_ch, 1)
+        self.act_factor = SigmoidBeta(0.5)
     
-    def forward(self, t1, t2):
-        out_i = self.image_stage(torch.cat([t1,t2], dim=1))
-        factor = self.conv_factor(torch.cat([out_i,t1,t2], dim=1))
-        pred_i = self.image_head(out_i)
-        frames = self.image_to_video(t1, t2, factor)
-        out_v = self.video_stage(frames.transpose(1,2))
-        pred_v = self.video_head(out_v)
-        return pred_i, pred_i+pred_v
+    def forward(self, t1, t2, k=1):
+        preds = []
+        for iter in range(k):
+            if iter == 0:
+                factor = torch.ones_like(t1[:,0:1])
+            else:
+                factor = self.act_factor(pred.detach())
+            frames = self.image_to_video(t1, t2, factor)
+            pred = self.seg_video(frames.transpose(1,2))
+            preds.append(pred)
+        return preds
 
     def image_to_video(self, im1, im2, factor_map):
         delta = 1.0/(self.video_len-1)
