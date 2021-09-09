@@ -95,3 +95,9 @@ def build_CiDL_Dec_model(C):
     )
     model.apply(gaussian_weights_init)
     return model
+
+
+@MODELS.register_func('DnD_model')
+def build_DnD_model(C):
+    from models.dndnet import DnDNet
+    return DnDNet(**C['dnd_model'])

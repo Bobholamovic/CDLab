@@ -7,6 +7,8 @@ from skimage import io
 
 from core.trainer import Trainer
 from ..builders.sched_builders import build_schedulers
+from utils.data_utils.augmentations import Compose
+from utils.data_utils.preprocessors import Normalize
 
 
 class CDTrainer(Trainer):
@@ -100,3 +102,25 @@ class CDTrainer(Trainer):
     # def __del__(self):
     #     if self.tb_on:
     #         self.tb_writer.close()
+
+    def denorm(self, x):
+        # HACK: perhaps I should consider norm and denorm in the design
+        def _make_denorm_func(norm_tf):
+            assert not norm_tf.zscore
+            return lambda x: x * norm_tf.sigma + norm_tf.mu
+
+        transforms = self.eval_loader.dataset.transforms[1]
+        if isinstance(transforms, Compose):
+            norm_tfs = filter(lambda tf: isinstance(tf, Normalize), transforms.tfs)
+            try:
+                norm_tf = next(norm_tfs)
+            except StopIteration:
+                raise ValueError
+            denorm_func = _make_denorm_func(norm_tf)
+            if next(norm_tfs, None) is not None:
+                raise ValueError
+        elif isinstance(transforms, Normalize):
+            denorm_func = _make_denorm_func(transforms)
+        else:
+            raise ValueError
+        return denorm_func(x)

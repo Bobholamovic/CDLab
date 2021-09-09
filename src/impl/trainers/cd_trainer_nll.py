@@ -48,8 +48,10 @@ class CDTrainer_NLL(CDTrainer):
                 # Write to tensorboard
                 self.tb_writer.add_scalar("Train/loss", losses.val, self.train_step)
                 if show_imgs_on_tb:
-                    self.tb_writer.add_image("Train/t1_picked", t1.detach()[0], self.train_step)
-                    self.tb_writer.add_image("Train/t2_picked", t2.detach()[0], self.train_step)
+                    t1 = self.denorm(to_array(t1.detach()[0])).astype('uint8')
+                    t2 = self.denorm(to_array(t2.detach()[0])).astype('uint8')
+                    self.tb_writer.add_image("Train/t1_picked", t1, self.train_step, dataformats='HWC')
+                    self.tb_writer.add_image("Train/t2_picked", t2, self.train_step, dataformats='HWC')
                     self.tb_writer.add_image("Train/labels_picked", tar[0].unsqueeze(0), self.train_step)
                     self.tb_writer.flush()
                 self.train_step += 1
@@ -94,8 +96,10 @@ class CDTrainer_NLL(CDTrainer):
 
                 if self.tb_on:
                     if dump:
-                        self.tb_writer.add_image("Eval/t1", t1[0], self.eval_step)
-                        self.tb_writer.add_image("Eval/t2", t2[0], self.eval_step)
+                        t1 = self.denorm(to_array(t1[0])).astype('uint8')
+                        t2 = self.denorm(to_array(t2[0])).astype('uint8')
+                        self.tb_writer.add_image("Eval/t1", t1, self.eval_step, dataformats='HWC')
+                        self.tb_writer.add_image("Eval/t2", t2, self.eval_step, dataformats='HWC')
                         self.tb_writer.add_image("Eval/labels", quantize(tar), self.eval_step, dataformats='HW')
                         prob = quantize(to_array(torch.exp(pred[0,1])))
                         self.tb_writer.add_image("Eval/prob", to_pseudo_color(prob), self.eval_step, dataformats='HWC')

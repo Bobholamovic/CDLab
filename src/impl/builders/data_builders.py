@@ -244,3 +244,37 @@ def build_Lebedev_CiDL_eval_dataset(C):
 
     from data.lebedev import LebedevDataset
     return build_eval_dataloader(LebedevDataset, configs)
+
+
+@DATA.register_func('Lebedev_DnD_train_dataset')
+def build_Lebedev_DnD_train_dataset(C):
+    configs = get_common_train_configs(C)
+    configs.update(dict(
+        transforms=(Compose(Choose(
+            HorizontalFlip(), VerticalFlip(), 
+            Rotate('90'), Rotate('180'), Rotate('270'),
+            Scale([0.9, 3.0]),
+            Shift(),),
+            Crop(C['crop_size']),
+        ), Normalize(mu=np.array([123.675, 116.28, 103.53]), sigma=np.array([58.395, 57.12, 57.375])), None),
+        root=constants.IMDB_LEBEDEV,
+        sets=('real',)
+    ))
+
+    from data.lebedev import LebedevDataset
+    return build_train_dataloader(LebedevDataset, configs, C)
+
+
+@DATA.register_func('Lebedev_DnD_eval_dataset')
+def build_Lebedev_DnD_eval_dataset(C):
+    configs = get_common_eval_configs(C)
+    configs.update(dict(
+        transforms=(Compose(
+            Resize((224,224)),
+        ), Normalize(mu=np.array([123.675, 116.28, 103.53]), sigma=np.array([58.395, 57.12, 57.375])), None),
+        root=constants.IMDB_LEBEDEV,
+        sets=('real',)
+    ))
+
+    from data.lebedev import LebedevDataset
+    return build_eval_dataloader(LebedevDataset, configs)
