@@ -85,7 +85,7 @@ class DnDTrainer(CDTrainer):
         pb = tqdm(self.eval_loader)
 
         # Construct metrics
-        metrics = (Precision(), Recall(), F1Score(), Accuracy())
+        metrics = (Precision(mode='accum'), Recall(mode='accum'), F1Score(mode='accum'), Accuracy(mode='accum'))
 
         self.model.eval()
         critn_recon, critn_cd = self.criterion
@@ -109,7 +109,7 @@ class DnDTrainer(CDTrainer):
 
                 desc = (start_pattern+" Loss_cd: {:.4f} ({:.4f})").format(i+1, len_eval, losses_cd.val, losses_cd.avg)
                 for m in metrics:
-                    desc += " {} {:.4f} ({:.4f})".format(m.__name__, m.val, m.avg)
+                    desc += " {} {:.4f}".format(m.__name__, m.val)
 
                 pb.set_description(desc)
                 dump = not self.is_training or (i % max(1, len_eval//10) == 0)
@@ -133,7 +133,7 @@ class DnDTrainer(CDTrainer):
 
         if self.tb_on:
             self.tb_writer.add_scalar("Eval/loss_cd", losses_cd.avg, self.eval_step)
-            self.tb_writer.add_scalars("Eval/metrics", {m.__name__.lower(): m.avg for m in metrics}, self.eval_step)
+            self.tb_writer.add_scalars("Eval/metrics", {m.__name__.lower(): m.val for m in metrics}, self.eval_step)
             self.tb_writer.flush()
 
-        return metrics[2].avg   # F1-score
+        return metrics[2].val   # F1-score

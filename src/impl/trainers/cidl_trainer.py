@@ -137,7 +137,7 @@ class CiDLTrainer(CDTrainer):
         pb = tqdm(self.eval_loader)
 
         # Construct metrics
-        metrics = (Precision(), Recall(), F1Score(), Accuracy())
+        metrics = (Precision(mode='accum'), Recall(mode='accum'), F1Score(mode='accum'), Accuracy(mode='accum'))
 
         self.model.eval()
 
@@ -168,7 +168,7 @@ class CiDLTrainer(CDTrainer):
 
                 desc = start_pattern.format(i+1, len_eval)
                 for m in metrics:
-                    desc += " {} {:.4f} ({:.4f})".format(m.__name__, m.val, m.avg)
+                    desc += " {} {:.4f}".format(m.__name__, m.val)
 
                 pb.set_description(desc)
                 dump = not self.is_training or (i % max(1, len_eval//10) == 0)
@@ -195,7 +195,7 @@ class CiDLTrainer(CDTrainer):
                     self.save_image(name[0], quantize(cm), epoch)
 
         if self.tb_on:
-            self.tb_writer.add_scalars("Eval/metrics", {m.__name__.lower(): m.avg for m in metrics}, self.eval_step)
+            self.tb_writer.add_scalars("Eval/metrics", {m.__name__.lower(): m.val for m in metrics}, self.eval_step)
             self.tb_writer.flush()
 
-        return metrics[2].avg   # F1-score
+        return metrics[2].val   # F1-score

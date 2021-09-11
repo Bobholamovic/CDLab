@@ -65,7 +65,7 @@ class CDTrainer_NLL(CDTrainer):
         pb = tqdm(self.eval_loader)
 
         # Construct metrics
-        metrics = (Precision(), Recall(), F1Score(), Accuracy())
+        metrics = (Precision(mode='accum'), Recall(mode='accum'), F1Score(mode='accum'), Accuracy(mode='accum'))
 
         self.model.eval()
 
@@ -87,7 +87,7 @@ class CDTrainer_NLL(CDTrainer):
 
                 desc = (start_pattern+" Loss: {:.4f} ({:.4f})").format(i+1, len_eval, losses.val, losses.avg)
                 for m in metrics:
-                    desc += " {} {:.4f} ({:.4f})".format(m.__name__, m.val, m.avg)
+                    desc += " {} {:.4f}".format(m.__name__, m.val)
 
                 pb.set_description(desc)
                 dump = not self.is_training or (i % max(1, len_eval//10) == 0)
@@ -111,7 +111,7 @@ class CDTrainer_NLL(CDTrainer):
 
         if self.tb_on:
             self.tb_writer.add_scalar("Eval/loss", losses.avg, self.eval_step)
-            self.tb_writer.add_scalars("Eval/metrics", {m.__name__.lower(): m.avg for m in metrics}, self.eval_step)
+            self.tb_writer.add_scalars("Eval/metrics", {m.__name__.lower(): m.val for m in metrics}, self.eval_step)
             self.tb_writer.flush()
 
-        return metrics[2].avg   # F1-score
+        return metrics[2].val   # F1-score
