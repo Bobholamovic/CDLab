@@ -19,6 +19,7 @@ schedulers:
     step_size: 5
     gamma: 0.5
 
+dnd_arch: dnd
 dnd_model:
   in_ch: 3
   out_ch: 1
