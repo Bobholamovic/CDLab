@@ -99,12 +99,14 @@ def build_CiDL_Dec_model(C):
 
 @MODELS.register_func('DnD_model')
 def build_DnD_model(C):
-    from models.dndnet import DnDNet, BaselineModel, DnDNet_align
+    from models.dndnet import DnDNet, BaselineModel, DnDNet_align, BaselineModel_align
     if C['dnd_arch'] == 'dnd':
         return DnDNet(**C['dnd_model'])
     elif C['dnd_arch'] == 'baseline':
         return BaselineModel(**C['dnd_model'])
     elif C['dnd_arch'] == 'align':
         return DnDNet_align(**C['dnd_model'])
+    elif C['dnd_arch'] == 'baseline_align':
+        return BaselineModel_align(**C['dnd_model'])
     else:
         raise ValueError

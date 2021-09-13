@@ -54,7 +54,7 @@ class DnDNet_align(DnDNet):
 
         # Align bi-temporal features
         feats1 = list(map(self.ada_in, feats1, feats2))
-
+        
         x1 = self.backbone.segmentation_head(self.backbone.decoder(*feats1))
         x1 = self.conv_itm(torch.cat([x1, feats1[0]], dim=1)) + x1
         x2 = self.backbone.segmentation_head(self.backbone.decoder(*feats2))
@@ -75,3 +75,14 @@ class DnDNet_align(DnDNet):
         mu2 = f2.mean(1, keepdims=True)
         sigma2 = f2.std(1, keepdims=True)
         return sigma2*(f1-mu1)/sigma1 + mu2
+
+
+class BaselineModel_align(DnDNet_align):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        class _Identity2(nn.Module):
+            def forward(self, x1, x2):
+                return x1, x2
+
+        self.distill = _Identity2()

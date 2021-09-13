@@ -56,7 +56,7 @@ class Distill(nn.Module):
         u1 = self._l2norm(u1, dim=1)
         u2 = torch.bmm(y1_2, y2_2)
         u2 = self._l2norm(u2, dim=1)
-
+        
         y3_1 = torch.bmm(u1, v)
         y3_2 = torch.bmm(u2, v)
 
