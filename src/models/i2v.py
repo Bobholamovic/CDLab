@@ -7,23 +7,22 @@ from ._blocks import DecBlock, ResBlock, Conv3x3, BasicConv
 
 
 class VideoDecoder(nn.Module):
-    def __init__(self, enc_chs, dec_chs, tem_lens, alpha):
+    def __init__(self, enc_chs, dec_chs, tem_lens):
         super().__init__()
         if not len(enc_chs) == len(dec_chs)+1:
             raise ValueError
         enc_chs = enc_chs[::-1]
         tem_lens = tem_lens[::-1]
 
-        slim_chs = enc_chs[0:1]+tuple(map(lambda ch: int(ch*alpha), enc_chs[1:]))
         self.conv_video = nn.ModuleList(
             [
-                BasicConv(tem_len*fch, sch, 1, bn=True, act=True)
-                for tem_len, fch, sch in zip(tem_lens, enc_chs, slim_chs)
+                BasicConv(tem_len*ch, ch, 1, bn=True, act=True)
+                for tem_len, ch in zip(tem_lens, enc_chs)
             ]
         )
         self.blocks = nn.ModuleList([
             DecBlock(in_ch1, in_ch2, out_ch)
-            for in_ch1, in_ch2, out_ch in zip(slim_chs[1:], (slim_chs[0],)+dec_chs[:-1], dec_chs)
+            for in_ch1, in_ch2, out_ch in zip(enc_chs[1:], (enc_chs[0],)+dec_chs[:-1], dec_chs)
         ])
         self.conv_out = BasicConv(dec_chs[-1], 1, 1)
     
@@ -46,21 +45,21 @@ class VideoSegModel(nn.Module):
             raise ValueError
         # Encoder
         self.encoder = models.video.r3d_18(pretrained=True)
+        self.encoder.layer4 = nn.Identity()
         self.encoder.fc = nn.Identity()
         # Decoder
-        enc_chs=(in_ch,64,128,256,512)
-        tem_lens=tuple(int(video_len*s) for s in (1,1,0.5,0.25,0.125))
+        enc_chs=(in_ch,64,128,256)
+        tem_lens=tuple(int(video_len*s) for s in (1,1,0.5,0.25))
         self.decoder = VideoDecoder(
             enc_chs=enc_chs, 
             dec_chs=dec_chs, 
-            tem_lens=tem_lens, 
-            alpha=0.5
+            tem_lens=tem_lens
         )
 
     def forward(self, x):
         feats = [x]
         x = self.encoder.stem(x)
-        for i in range(4):
+        for i in range(3):
             layer = getattr(self.encoder, f'layer{i+1}')
             x = layer(x)
             feats.append(x)
@@ -85,7 +84,7 @@ class I2VNet(nn.Module):
             raise ValueError
         self.seg_video = VideoSegModel(
             in_ch, 
-            dec_chs=(256,128,64,32), 
+            dec_chs=(128,64,32), 
             video_len=video_len
         )
         self.act_factor = SigmoidBeta(0.5)
