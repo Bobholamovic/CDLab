@@ -14,9 +14,9 @@ from utils.utils import HookHelper, FeatureContainer
 from utils.metrics import (Meter, Precision, Recall, Accuracy, F1Score)
 
 
-class I2VTrainer(CDTrainer):
+class P2VTrainer(CDTrainer):
     def __init__(self, settings):
-        assert settings['model'] == 'I2V'
+        assert settings['model'] == 'P2V'
         super().__init__(settings['model'], settings['dataset'], settings['criterion'], settings['optimizer'], settings)
         self.k_train = settings['k_train']
         self.k_test = settings['k_test']

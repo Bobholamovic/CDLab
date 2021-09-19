@@ -1,7 +1,7 @@
-# Lebedev+I2V
+# Lebedev+P2V
 
-model: I2V
-out_dir: I2V
+model: P2V
+out_dir: P2V
 suffix_off: True
 
 k_train: 2
@@ -19,3 +19,8 @@ schedulers:
   - name: StepLR
     step_size: 5
     gamma: 0.5
+
+p2v_model:
+  in_ch: 3
+  video_len: 8
+  alpha: 0.5

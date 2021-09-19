@@ -76,8 +76,8 @@ class SigmoidBeta(nn.Sigmoid):
         return super().forward(self.beta*x)
 
 
-class I2VNet(nn.Module):
-    def __init__(self, in_ch, video_len=8):
+class P2VNet(nn.Module):
+    def __init__(self, in_ch, video_len=8, alpha=0.5):
         super().__init__()
         self.video_len = video_len
         if self.video_len < 2:
@@ -87,7 +87,7 @@ class I2VNet(nn.Module):
             dec_chs=(128,64,32), 
             video_len=video_len
         )
-        self.act_factor = SigmoidBeta(0.5)
+        self.act_factor = SigmoidBeta(alpha)
     
     def forward(self, t1, t2, k=1):
         preds = []
@@ -96,12 +96,12 @@ class I2VNet(nn.Module):
                 factor = torch.ones_like(t1[:,0:1])
             else:
                 factor = self.act_factor(pred.detach())
-            frames = self.image_to_video(t1, t2, factor)
+            frames = self.pair_to_video(t1, t2, factor)
             pred = self.seg_video(frames.transpose(1,2))
             preds.append(pred)
         return preds
 
-    def image_to_video(self, im1, im2, factor_map):
+    def pair_to_video(self, im1, im2, factor_map):
         delta = 1.0/(self.video_len-1)
         delta_map = factor_map * delta
         steps = torch.arange(self.video_len, dtype=torch.float, device=delta_map.device).view(1,-1,1,1,1)

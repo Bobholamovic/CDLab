@@ -191,8 +191,8 @@ class _Identity:
         return args if len(args)>0 else args[0]
 
 
-@DATA.register_func('Lebedev_I2V_train_dataset')
-def build_Lebedev_I2V_train_dataset(C):
+@DATA.register_func('Lebedev_P2V_train_dataset')
+def build_Lebedev_P2V_train_dataset(C):
     configs = get_common_train_configs(C)
     configs.update(dict(
         transforms=(Compose(Choose(
@@ -210,8 +210,8 @@ def build_Lebedev_I2V_train_dataset(C):
     return build_train_dataloader(LebedevDataset, configs, C)
 
 
-@DATA.register_func('Lebedev_I2V_eval_dataset')
-def build_Lebedev_I2V_eval_dataset(C):
+@DATA.register_func('Lebedev_P2V_eval_dataset')
+def build_Lebedev_P2V_eval_dataset(C):
     configs = get_common_eval_configs(C)
     configs.update(dict(
         transforms=(Compose(
