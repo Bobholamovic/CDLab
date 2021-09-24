@@ -105,7 +105,7 @@ class P2VTrainer(CDTrainer):
                 pred = preds[-1].squeeze(1)
 
                 loss = sum(self.criterion(pred.squeeze(1), tar) for pred in preds)
-                losses.update(loss.item(), n=self.batch_size)
+                losses.update(loss.item())
 
                 # Convert to numpy arrays
                 cm = to_array(torch.sigmoid(pred[0])>self.thresh).astype('uint8')

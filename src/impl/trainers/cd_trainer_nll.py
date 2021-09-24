@@ -76,7 +76,7 @@ class CDTrainer_NLL(CDTrainer):
                 pred = self.model(t1, t2)
 
                 loss = self.criterion(pred, tar)
-                losses.update(loss.item(), n=self.batch_size)
+                losses.update(loss.item())
 
                 # Convert to numpy arrays
                 cm = to_array(torch.argmax(pred[0], 0)).astype('uint8')

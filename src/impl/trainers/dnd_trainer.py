@@ -78,7 +78,7 @@ class DnDTrainer(CDTrainer):
 
     def evaluate_epoch(self, epoch):
         self.logger.show_nl("Epoch: [{0}]".format(epoch))
-        losses_cd = Meter()
+        losses_recon, losses_cd = Meter(), Meter()
         len_eval = len(self.eval_loader)
         width = len(str(len_eval))
         start_pattern = "[{{:>{0}}}/{{:>{0}}}]".format(width)
@@ -94,11 +94,13 @@ class DnDTrainer(CDTrainer):
             for i, (name, t1, t2, tar) in enumerate(pb):
                 t1, t2, tar = t1.to(self.device), t2.to(self.device), tar.to(self.device)
                 
-                pred = self.model(t1, t2)
+                f1, f2, recon1, recon2, pred = self.model(t1, t2)
                 pred = pred.squeeze(1)
 
+                loss_recon = critn_recon(f1, recon1) + critn_recon(f2, recon2)
                 loss_cd = critn_cd(pred, tar.float())
-                losses_cd.update(loss_cd.item(), n=self.batch_size)
+                losses_recon.update(loss_recon.item())
+                losses_cd.update(loss_cd.item())
 
                 # Convert to numpy arrays
                 cm = to_array(torch.sigmoid(pred[0])>self.thresh).astype('uint8')
@@ -107,7 +109,11 @@ class DnDTrainer(CDTrainer):
                 for m in metrics:
                     m.update(cm, tar)
 
-                desc = (start_pattern+" Loss_cd: {:.4f} ({:.4f})").format(i+1, len_eval, losses_cd.val, losses_cd.avg)
+                desc = (start_pattern+" Loss_recon: {:.4f} ({:.4f}) Loss_cd: {:.4f} ({:.4f})").format(
+                    i+1, len_eval, 
+                    losses_recon.val, losses_recon.avg,
+                    losses_cd.val, losses_cd.avg
+                )
                 for m in metrics:
                     desc += " {} {:.4f}".format(m.__name__, m.val)
 
@@ -132,6 +138,7 @@ class DnDTrainer(CDTrainer):
                     self.save_image(name[0], quantize(cm), epoch)
 
         if self.tb_on:
+            self.tb_writer.add_scalar("Eval/loss_recon", losses_recon.avg, self.eval_step)
             self.tb_writer.add_scalar("Eval/loss_cd", losses_cd.avg, self.eval_step)
             self.tb_writer.add_scalars("Eval/metrics", {m.__name__.lower(): m.val for m in metrics}, self.eval_step)
             self.tb_writer.flush()

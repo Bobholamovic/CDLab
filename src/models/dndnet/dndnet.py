@@ -30,10 +30,7 @@ class DnDNet(nn.Module):
 
         pred = self.conv_out(torch.cat([y1, y2], dim=1))
 
-        if self.training:
-            return x1, x2, y1, y2, pred
-        else:
-            return pred
+        return x1, x2, y1, y2, pred
 
 
 class BaselineModel(DnDNet):
@@ -64,10 +61,7 @@ class DnDNet_align(DnDNet):
 
         pred = self.conv_out(torch.cat([y1, y2], dim=1))
 
-        if self.training:
-            return x1, x2, y1, y2, pred
-        else:
-            return pred
+        return x1, x2, y1, y2, pred
 
     def ada_in(self, f1, f2):
         mu1 = f1.mean(1, keepdims=True)
