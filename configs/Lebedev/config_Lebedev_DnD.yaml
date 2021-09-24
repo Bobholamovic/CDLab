@@ -4,7 +4,7 @@ model: DnD
 out_dir: DnD
 suffix_off: True
 
-lambda_recon: 1.0
+lambda_recon: 0.01
 criterion: L1+WBCE
 threshold: 0.5
 
