@@ -77,7 +77,7 @@ class SigmoidBeta(nn.Sigmoid):
 
 
 class P2VNet(nn.Module):
-    def __init__(self, in_ch, video_len=8, alpha=0.5):
+    def __init__(self, in_ch, video_len=8, beta=0.5):
         super().__init__()
         self.video_len = video_len
         if self.video_len < 2:
@@ -87,7 +87,7 @@ class P2VNet(nn.Module):
             dec_chs=(128,64,32), 
             video_len=video_len
         )
-        self.act_factor = SigmoidBeta(alpha)
+        self.act_factor = SigmoidBeta(beta)
     
     def forward(self, t1, t2, k=1):
         preds = []
