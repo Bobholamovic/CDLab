@@ -9,14 +9,13 @@ class Distill(nn.Module):
     def __init__(self, c, k, p=8):
         super(Distill, self).__init__()
 
-        self.conv_v = nn.Conv2d(2*c, k, 1)
+        self.conv_u_1 = nn.Conv2d(c, k, 1)
+        self.conv_u_2 = nn.Conv2d(c, k, 1)
 
-        self.conv1_1 = nn.Conv2d(c, c, 1)
-        self.conv2_1 = nn.Conv2d(c, k, 1)
+        self.conv_v_left = nn.Conv2d(2*c, c, 1)
+        self.conv_v_right = nn.Conv2d(2*c, k, 1)
+
         self.conv_out_1 = nn.Conv2d(c, c, 1, bias=False)
-
-        self.conv1_2 = nn.Conv2d(c, c, 1)
-        self.conv2_2 = nn.Conv2d(c, k, 1)
         self.conv_out_2 = nn.Conv2d(c, c, 1, bias=False)
 
         self.k = k
@@ -31,34 +30,32 @@ class Distill(nn.Module):
         b, c, h, w = x1.shape
 
         x1 = self._image_to_patches(x1)
-        y1_1 = self.conv1_1(x1)
-        y2_1 = self.conv2_1(x1)
+        u1 = self.conv_u_1(x1)
 
         x2 = self._image_to_patches(x2)
-        y1_2 = self.conv1_2(x2)
-        y2_2 = self.conv2_2(x2)
+        u2 = self.conv_u_2(x2)
 
-        v = self.conv_v(torch.cat([x1,x2], dim=1))
+        x = torch.cat([x1,x2], dim=1)
+        left = self.conv_v_left(x)
+        right = self.conv_v_right(x)
 
         k = self.k
         pp = self.p*self.p
         bpp = b*pp
 
-        y1_1 = y1_1.permute((0,2,1,3)).reshape(bpp, c, -1)
-        y1_2 = y1_2.permute((0,2,1,3)).reshape(bpp, c, -1)
-        y2_1 = y2_1.permute((0,2,3,1)).reshape(bpp, -1, k)
-        y2_2 = y2_2.permute((0,2,3,1)).reshape(bpp, -1, k)
+        left = left.permute((0,2,1,3)).reshape(bpp, c, -1)
+        right = right.permute((0,2,3,1)).reshape(bpp, -1, k)
 
-        v = v.permute((0,2,1,3)).reshape(bpp, k, -1)
-        v = F.softmax(v, dim=1)
+        u1 = u1.permute((0,2,1,3)).reshape(bpp, k, -1)
+        u1 = F.softmax(u1, dim=1)
+        u2 = u2.permute((0,2,1,3)).reshape(bpp, k, -1)
+        u2 = F.softmax(u2, dim=1)
         
-        u1 = torch.bmm(y1_1, y2_1)
-        u1 = self._l2norm(u1, dim=1)
-        u2 = torch.bmm(y1_2, y2_2)
-        u2 = self._l2norm(u2, dim=1)
+        v = torch.bmm(left, right)
+        v = self._l2norm(v, dim=1)
         
-        y3_1 = torch.bmm(u1, v)
-        y3_2 = torch.bmm(u2, v)
+        y3_1 = torch.bmm(v, u1)
+        y3_2 = torch.bmm(v, u2)
 
         y3_1 = self._patches_to_image(y3_1.view(b,pp,c,-1).permute((0,2,1,3)), h, w)
         y3_1 = self.conv_out_1(y3_1)
