@@ -94,14 +94,14 @@ class P2VTrainer(CDTrainer):
                         'seg_video': 'frames'
                     }
                     fetch_dict_fo = {
-                        'act_factor': 'factor'
+                        'act_rate': 'rate'
                     }
                     with HookHelper(self.model, fetch_dict_fi, feats, 'forward_in'), \
                         HookHelper(self.model, fetch_dict_fo, feats, 'forward_out'):
                         preds = self.model(t1, t2, self.k_test)
                 else:
                     preds = self.model(t1, t2, self.k_test)
-
+                
                 pred = preds[-1].squeeze(1)
 
                 loss = sum(self.criterion(pred.squeeze(1), tar) for pred in preds)
@@ -136,10 +136,10 @@ class P2VTrainer(CDTrainer):
                         prob = quantize(to_array(torch.sigmoid(pred)))
                         self.tb_writer.add_image("Eval/prob", to_pseudo_color(prob), self.eval_step, dataformats='HWC')
                         self.tb_writer.add_image("Eval/cm", quantize(cm), self.eval_step, dataformats='HW')
-                        if 'factor' in feats.keys():
-                            for j in range(len(feats['factor'])):
-                                factor = quantize(to_array(feats['factor'][j][0]))
-                                self.tb_writer.add_image("Eval/factor_{}".format(j+1), to_pseudo_color(factor), self.eval_step, dataformats='HWC')
+                        if 'rate' in feats.keys():
+                            for j in range(len(feats['rate'])):
+                                rate = quantize(to_array(feats['rate'][j][0]))
+                                self.tb_writer.add_image("Eval/rate_{}".format(j+1), to_pseudo_color(rate), self.eval_step, dataformats='HWC')
                     self.eval_step += 1
                 
                 if self.save:

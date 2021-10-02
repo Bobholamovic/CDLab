@@ -87,23 +87,23 @@ class P2VNet(nn.Module):
             dec_chs=(128,64,32), 
             video_len=video_len
         )
-        self.act_factor = SigmoidBeta(beta)
+        self.act_rate = SigmoidBeta(beta)
     
     def forward(self, t1, t2, k=1):
         preds = []
         for iter in range(k):
             if iter == 0:
-                factor = torch.ones_like(t1[:,0:1])
+                rate_map = torch.ones_like(t1[:,0:1])
             else:
-                factor = self.act_factor(pred.detach())
-            frames = self.pair_to_video(t1, t2, factor)
+                rate_map = self.act_rate(pred.detach())
+            frames = self.pair_to_video(t1, t2, rate_map)
             pred = self.seg_video(frames.transpose(1,2))
             preds.append(pred)
         return preds
 
-    def pair_to_video(self, im1, im2, factor_map):
+    def pair_to_video(self, im1, im2, rate_map):
         delta = 1.0/(self.video_len-1)
-        delta_map = factor_map * delta
+        delta_map = rate_map * delta
         steps = torch.arange(self.video_len, dtype=torch.float, device=delta_map.device).view(1,-1,1,1,1)
         frames = im1.unsqueeze(1)+((im2-im1)*delta_map).unsqueeze(1)*steps
         return frames
