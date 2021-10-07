@@ -102,8 +102,11 @@ class P2VNet(nn.Module):
         return preds
 
     def pair_to_video(self, im1, im2, rate_map):
-        delta = 1.0/(self.video_len-1)
-        delta_map = rate_map * delta
+        diff = (im2 - im1).unsqueeze(1)
+        sign = torch.sign(diff)
+        diff = torch.abs(diff)
+        delta = diff.max()/(self.video_len-1)
+        delta_map = rate_map.unsqueeze(1) * delta
         steps = torch.arange(self.video_len, dtype=torch.float, device=delta_map.device).view(1,-1,1,1,1)
-        frames = im1.unsqueeze(1)+((im2-im1)*delta_map).unsqueeze(1)*steps
+        frames = im1.unsqueeze(1)+sign*torch.min(delta_map*steps, diff)
         return frames
