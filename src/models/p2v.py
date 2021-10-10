@@ -91,22 +91,31 @@ class P2VNet(nn.Module):
     
     def forward(self, t1, t2, k=1):
         preds = []
+        rate_map = None
+        frames = None
         for iter in range(k):
-            if iter == 0:
-                rate_map = torch.ones_like(t1[:,0:1])
-            else:
-                rate_map = self.act_rate(pred.detach())
-            frames = self.pair_to_video(t1, t2, rate_map)
+            frames = self.pair_to_video(t1, t2, rate_map, frames, iter)
             pred = self.seg_video(frames.transpose(1,2))
             preds.append(pred)
+            rate_map = self.act_rate(pred.detach())
         return preds
 
-    def pair_to_video(self, im1, im2, rate_map):
-        diff = (im2 - im1).unsqueeze(1)
-        sign = torch.sign(diff)
-        diff = torch.abs(diff)
-        delta = diff.max()/(self.video_len-1)
-        delta_map = rate_map.unsqueeze(1) * delta
-        steps = torch.arange(self.video_len, dtype=torch.float, device=delta_map.device).view(1,-1,1,1,1)
-        frames = im1.unsqueeze(1)+sign*torch.min(delta_map*steps, diff)
+    def pair_to_video(self, im1, im2, rate_map, old_frames, iter):
+        def _interpolate(im1, im2, rate_map, len):
+            delta = 1.0/(len-1)
+            delta_map = rate_map * delta
+            steps = torch.arange(len, dtype=torch.float, device=delta_map.device).view(1,-1,1,1,1)
+            interped = im1.unsqueeze(1)+((im2-im1)*delta_map).unsqueeze(1)*steps
+            return interped
+
+        if rate_map is None:
+            rate_map = torch.ones_like(im1[:,0:1])
+        if iter == 0:
+            frames = _interpolate(im1, im2, rate_map, self.video_len)
+        else:
+            len = self.video_len>>iter
+            if len == 0:
+                raise RuntimeError
+            interped = _interpolate(old_frames[:,-len], im2, rate_map, len)
+            frames = torch.cat((old_frames[:,:-len], interped), dim=1)
         return frames
