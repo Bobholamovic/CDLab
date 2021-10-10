@@ -114,7 +114,7 @@ class P2VNet(nn.Module):
             frames = _interpolate(im1, im2, rate_map, self.video_len)
         else:
             len = self.video_len>>iter
-            if len == 0:
+            if len < 2:
                 raise RuntimeError
             interped = _interpolate(old_frames[:,-len], im2, rate_map, len)
             frames = torch.cat((old_frames[:,:-len], interped), dim=1)
