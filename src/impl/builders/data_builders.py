@@ -284,3 +284,31 @@ def build_Lebedev_DnD_eval_dataset(C):
 
     from data.lebedev import LebedevDataset
     return build_eval_dataloader(LebedevDataset, configs)
+
+
+@DATA.register_func('LEVIR-CD_train_dataset')
+def build_LEVIR_CD_train_dataset(C):
+    configs = get_common_train_configs(C)
+    configs.update(dict(
+        transforms=(Choose(
+            HorizontalFlip(), VerticalFlip(), 
+            Rotate('90'), Rotate('180'), Rotate('270'),
+            Shift(), 
+            _Identity()), Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
+        root=constants.IMDB_LEVIR_CD,
+    ))
+
+    from data.levir_cd import LEVIRCDDataset
+    return build_train_dataloader(LEVIRCDDataset, configs, C)
+
+
+@DATA.register_func('LEVIR-CD_eval_dataset')
+def build_LEVIR_CD_eval_dataset(C):
+    configs = get_common_eval_configs(C)
+    configs.update(dict(
+        transforms=(None, Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
+        root=constants.IMDB_LEVIR_CD,
+    ))
+
+    from data.levir_cd import LEVIRCDDataset
+    return build_eval_dataloader(LEVIRCDDataset, configs)

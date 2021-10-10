@@ -1,0 +1,15 @@
+# LEVIR-CD+P2V
+
+model: P2V
+out_dir: P2V
+suffix_off: True
+
+k_train: 2
+k_test: 2
+criterion: WBCE
+threshold: 0.5
+
+p2v_model:
+  in_ch: 3
+  video_len: 8
+  beta: 0.5

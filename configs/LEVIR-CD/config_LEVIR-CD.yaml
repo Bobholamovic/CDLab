@@ -1,0 +1,56 @@
+# Basic configurations on LEVIR-CD dataset
+
+
+# Data
+dataset: LEVIR-CD
+num_workers: 2
+repeats: 1
+subset: val
+crop_size: 256
+
+
+# Optimizer
+optimizer: Adam
+lr: 0.0004
+weight_decay: 0.00005
+load_optim: False
+save_optim: False
+sched_on: True
+schedulers:
+  - name: ExponentialLR
+    gamma: 0.97
+
+
+# Training related
+batch_size: 8
+num_epochs: 100
+resume: ''
+anew: False
+device: cuda
+
+
+# Experiment
+exp_dir: ../exp/
+# tag: ''
+# suffix: ''
+# DO NOT specify exp_config
+debug_on: False
+inherit_off: False
+log_off: False
+track_intvl: 10
+tb_on: False
+tb_intvl: 1000
+suffix_off: False
+save_on: False
+out_dir: ''
+
+
+# Criterion
+criterion: WNLL
+weights: 
+  - 0.3   # Weight of no-change class
+  - 0.7   # Weight of change class
+
+
+# Model
+model: 
