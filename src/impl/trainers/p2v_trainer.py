@@ -103,7 +103,7 @@ class P2VTrainer(CDTrainer):
                 
                 pred = preds[-1].squeeze(1)
 
-                weights = reversed(0.5**i for i in range(len(preds)))
+                weights = [0.5**i for i in range(len(preds)-1,-1,-1)]
                 loss = sum(self.criterion(pred.squeeze(1), tar)*weight for pred, weight in zip(preds, weights)) / sum(weights)
                 losses.update(loss.item())
 
