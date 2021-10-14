@@ -4,26 +4,26 @@
 # Data
 dataset: LEVIR-CD
 num_workers: 2
-repeats: 1
+repeats: 7
 subset: val
 crop_size: 256
 
 
 # Optimizer
 optimizer: Adam
-lr: 0.0004
-weight_decay: 0.00005
+lr: 0.001
+weight_decay: 0.00003
 load_optim: False
 save_optim: False
 sched_on: True
 schedulers:
   - name: ExponentialLR
-    gamma: 0.97
+    gamma: 0.88
 
 
 # Training related
 batch_size: 8
-num_epochs: 100
+num_epochs: 30
 resume: ''
 anew: False
 device: cuda
@@ -37,7 +37,7 @@ exp_dir: ../exp/
 debug_on: False
 inherit_off: False
 log_off: False
-track_intvl: 10
+track_intvl: 5
 tb_on: False
 tb_intvl: 1000
 suffix_off: False
@@ -48,8 +48,8 @@ out_dir: ''
 # Criterion
 criterion: WNLL
 weights: 
-  - 0.3   # Weight of no-change class
-  - 0.7   # Weight of change class
+  - 0.5   # Weight of no-change class
+  - 0.5   # Weight of change class
 
 
 # Model

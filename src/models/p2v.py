@@ -14,7 +14,7 @@ class VideoDecoder(nn.Module):
         enc_chs = enc_chs[::-1]
         tem_lens = tem_lens[::-1]
 
-        self.conv_video = nn.ModuleList(
+        self.convs_video = nn.ModuleList(
             [
                 BasicConv(tem_len*ch, ch, 1, bn=True, act=True)
                 for tem_len, ch in zip(tem_lens, enc_chs)
@@ -24,14 +24,20 @@ class VideoDecoder(nn.Module):
             DecBlock(in_ch1, in_ch2, out_ch)
             for in_ch1, in_ch2, out_ch in zip(enc_chs[1:], (enc_chs[0],)+dec_chs[:-1], dec_chs)
         ])
-        self.conv_out = BasicConv(dec_chs[-1], 1, 1)
+        self.convs_out = nn.ModuleList([
+            nn.Sequential(
+                BasicConv(dec_ch, 32, 1, bn=False, act=True),
+                BasicConv(32, 1, 1, bn=False, act=False)
+            )
+            for dec_ch in dec_chs
+        ])
     
-    def forward(self, *feats):
+    def forward(self, *feats, l):
         feats = feats[::-1]
-        x = self.conv_video[0](self.flatten_video(feats[0]))
-        for blk, conv, f in zip(self.blocks, self.conv_video[1:], feats[1:]):
+        x = self.convs_video[0](self.flatten_video(feats[0]))
+        for blk, conv, f in zip(self.blocks[:l], self.convs_video[1:l+1], feats[1:l+1]):
             x = blk(conv(self.flatten_video(f)), x)
-        y = self.conv_out(x)
+        y = self.convs_out[l-1](x)
         return y
 
     def flatten_video(self, f):
@@ -49,35 +55,35 @@ class VideoSegModel(nn.Module):
         self.encoder.fc = nn.Identity()
         # Decoder
         enc_chs=(in_ch,64,128,256)
-        tem_lens=tuple(int(video_len*s) for s in (1,1,0.5,0.25))
+        tem_lens=tuple(int(video_len*s) for s in (1.0,1.0,0.5,0.25))
         self.decoder = VideoDecoder(
             enc_chs=enc_chs, 
             dec_chs=dec_chs, 
             tem_lens=tem_lens
         )
 
-    def forward(self, x):
+    def forward(self, x, l):
         feats = [x]
         x = self.encoder.stem(x)
         for i in range(3):
             layer = getattr(self.encoder, f'layer{i+1}')
             x = layer(x)
             feats.append(x)
-        out = self.decoder(*feats)
+        out = self.decoder(*feats, l=l)
         return out
 
 
 class SigmoidBeta(nn.Sigmoid):
     def __init__(self, beta, *args, **kwargs):
-        self.beta = beta
         super().__init__(*args, **kwargs)
+        self.beta = beta
 
     def forward(self, x):
         return super().forward(self.beta*x)
 
 
 class P2VNet(nn.Module):
-    def __init__(self, in_ch, video_len=8, beta=0.5):
+    def __init__(self, in_ch, video_len=8, beta=0.5, k=3):
         super().__init__()
         self.video_len = video_len
         if self.video_len < 2:
@@ -88,19 +94,23 @@ class P2VNet(nn.Module):
             video_len=video_len
         )
         self.act_rate = SigmoidBeta(beta)
+        if k > 3 or k < 1 or video_len>>(k-1)<=1:
+            raise ValueError
+        self.k = k
     
-    def forward(self, t1, t2, k=1):
+    def forward(self, t1, t2):
         preds = []
         rate_map = None
         frames = None
-        for iter in range(k):
-            frames = self.pair_to_video(t1, t2, rate_map, frames, iter)
-            pred = self.seg_video(frames.transpose(1,2))
+        for iter in range(self.k):
+            frames = self.pair_to_video(t1, t2, rate_map, frames, self.video_len>>(self.k-iter))
+            pred = self.seg_video(frames.transpose(1,2), 4-self.k+iter)
+            pred = F.interpolate(pred, size=t1.shape[2:])
             preds.append(pred)
             rate_map = self.act_rate(pred.detach())
         return preds
 
-    def pair_to_video(self, im1, im2, rate_map, old_frames, iter):
+    def pair_to_video(self, im1, im2, rate_map, old_frames, shift):
         def _interpolate(im1, im2, rate_map, len):
             delta = 1.0/(len-1)
             delta_map = rate_map * delta
@@ -110,12 +120,9 @@ class P2VNet(nn.Module):
 
         if rate_map is None:
             rate_map = torch.ones_like(im1[:,0:1])
-        if iter == 0:
+        if old_frames is None:
             frames = _interpolate(im1, im2, rate_map, self.video_len)
         else:
-            len = self.video_len>>iter
-            if len < 2:
-                raise RuntimeError
-            interped = _interpolate(old_frames[:,-len], im2, rate_map, len)
-            frames = torch.cat((old_frames[:,:-len], interped), dim=1)
+            interped = _interpolate(old_frames[:,shift], im2, rate_map, self.video_len-shift)
+            frames = torch.cat((old_frames[:,:shift], interped), dim=1)
         return frames

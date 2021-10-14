@@ -18,8 +18,6 @@ class P2VTrainer(CDTrainer):
     def __init__(self, settings):
         assert settings['model'] == 'P2V'
         super().__init__(settings['model'], settings['dataset'], settings['criterion'], settings['optimizer'], settings)
-        self.k_train = settings['k_train']
-        self.k_test = settings['k_test']
         self.thresh = settings['threshold']
 
     def train_epoch(self, epoch):
@@ -37,9 +35,10 @@ class P2VTrainer(CDTrainer):
             
             show_imgs_on_tb = self.tb_on and (i%self.tb_intvl == 0)
             
-            preds = self.model(t1, t2, self.k_train)
+            preds = self.model(t1, t2)
             
-            loss = sum(self.criterion(pred.squeeze(1), tar) for pred in preds)
+            weights = [0.5**i for i in range(len(preds)-1,-1,-1)]
+            loss = sum(self.criterion(pred.squeeze(1), tar)*weight for pred, weight in zip(preds, weights)) / sum(weights)
             losses.update(loss.item(), n=self.batch_size)
 
             self.optimizer.zero_grad()
@@ -91,20 +90,21 @@ class P2VTrainer(CDTrainer):
                 if self.tb_on or self.save:
                     feats = FeatureContainer()
                     fetch_dict_fi = {
-                        'seg_video': 'frames'
+                        'seg_video.encoder.stem': 'frames'
                     }
                     fetch_dict_fo = {
                         'act_rate': 'rate'
                     }
                     with HookHelper(self.model, fetch_dict_fi, feats, 'forward_in'), \
                         HookHelper(self.model, fetch_dict_fo, feats, 'forward_out'):
-                        preds = self.model(t1, t2, self.k_test)
+                        preds = self.model(t1, t2)
                 else:
-                    preds = self.model(t1, t2, self.k_test)
+                    preds = self.model(t1, t2)
                 
                 pred = preds[-1].squeeze(1)
 
-                loss = sum(self.criterion(pred.squeeze(1), tar) for pred in preds)
+                weights = reversed(0.5**i for i in range(len(preds)))
+                loss = sum(self.criterion(pred.squeeze(1), tar)*weight for pred, weight in zip(preds, weights)) / sum(weights)
                 losses.update(loss.item())
 
                 # Convert to numpy arrays
