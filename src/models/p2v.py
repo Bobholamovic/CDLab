@@ -83,27 +83,28 @@ class SigmoidBeta(nn.Sigmoid):
 
 
 class P2VNet(nn.Module):
-    def __init__(self, in_ch, video_len=8, beta=0.5, k=3):
+    def __init__(self, in_ch, video_len=8, beta=0.1, k=3):
         super().__init__()
-        self.video_len = video_len
-        if self.video_len < 2:
+        if video_len < 2:
             raise ValueError
+        self.video_len = video_len
         self.seg_video = VideoSegModel(
             in_ch, 
             dec_chs=(128,64,32), 
             video_len=video_len
         )
         self.act_rate = SigmoidBeta(beta)
-        if k > 3 or k < 1 or video_len>>(k-1)<=1:
+        if k > 3 or k < 1:
             raise ValueError
         self.k = k
     
-    def forward(self, t1, t2):
+    def forward(self, t1, t2, k_dyn=None):
         preds = []
         rate_map = None
         frames = None
-        for iter in range(self.k):
-            frames = self.pair_to_video(t1, t2, rate_map, frames, self.video_len>>(self.k-iter))
+        k = self.k if k_dyn is None else k_dyn
+        for iter in range(k):
+            frames = self.pair_to_video(t1, t2, rate_map, frames, self.video_len>>1)
             pred = self.seg_video(frames.transpose(1,2), 4-self.k+iter)
             pred = F.interpolate(pred, size=t1.shape[2:])
             preds.append(pred)

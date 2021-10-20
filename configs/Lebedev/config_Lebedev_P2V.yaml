@@ -5,6 +5,9 @@ out_dir: P2V
 suffix_off: True
 
 criterion: WBCE
+weights: 
+  - 0.5   # Weight of no-change class
+  - 0.5   # Weight of change class
 
 threshold: 0.5
 

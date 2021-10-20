@@ -196,13 +196,12 @@ def build_Lebedev_eval_dataset(C):
 def build_Lebedev_P2V_train_dataset(C):
     configs = get_common_train_configs(C)
     configs.update(dict(
-        transforms=(Compose(Choose(
+        transforms=(Choose(
             HorizontalFlip(), VerticalFlip(), 
             Rotate('90'), Rotate('180'), Rotate('270'),
             Shift(), 
-            _Identity()),
-            Resize((224,224)),
-        ), Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
+            _Identity()), 
+            Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
         root=constants.IMDB_LEBEDEV,
         sets=('real',)
     ))
@@ -215,9 +214,7 @@ def build_Lebedev_P2V_train_dataset(C):
 def build_Lebedev_P2V_eval_dataset(C):
     configs = get_common_eval_configs(C)
     configs.update(dict(
-        transforms=(Compose(
-            Resize((224,224)),
-        ), Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
+        transforms=(None, Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
         root=constants.IMDB_LEBEDEV,
         sets=('real',)
     ))

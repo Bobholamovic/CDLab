@@ -12,7 +12,7 @@ crop_size: 256
 # Optimizer
 optimizer: Adam
 lr: 0.001
-weight_decay: 0.00003
+weight_decay: 0.0
 load_optim: False
 save_optim: False
 sched_on: True
