@@ -89,18 +89,16 @@ class P2VTrainer(CDTrainer):
                 if self.tb_on or self.save:
                     feats = FeatureContainer()
                     fetch_dict_fi = {
-                        'seg_video.encoder.stem': 'frames'
+                        'seg_video.encoder': 'frames'
                     }
                     fetch_dict_fo = {
                         'act_rate': 'rate'
                     }
                     with HookHelper(self.model, fetch_dict_fi, feats, 'forward_in'), \
                         HookHelper(self.model, fetch_dict_fo, feats, 'forward_out'):
-                        preds = self.model(t1, t2)
+                        pred = self.model(t1, t2)
                 else:
-                    preds = self.model(t1, t2)
-                
-                pred = self.model(t1, t2)
+                    pred = self.model(t1, t2)
                 
                 loss = self.criterion(pred.squeeze(1), tar)
                 losses.update(loss.item())
