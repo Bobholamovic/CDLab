@@ -24,20 +24,14 @@ class VideoDecoder(nn.Module):
             DecBlock(in_ch1, in_ch2, out_ch)
             for in_ch1, in_ch2, out_ch in zip(enc_chs[1:], (enc_chs[0],)+dec_chs[:-1], dec_chs)
         ])
-        self.convs_out = nn.ModuleList([
-            nn.Sequential(
-                BasicConv(dec_ch, 32, 1, bn=False, act=True),
-                BasicConv(32, 1, 1, bn=False, act=False)
-            )
-            for dec_ch in dec_chs
-        ])
+        self.conv_out = BasicConv(dec_chs[-1], 1, 1, bn=False, act=False)
     
-    def forward(self, *feats, l):
+    def forward(self, *feats):
         feats = feats[::-1]
         x = self.convs_video[0](self.flatten_video(feats[0]))
-        for blk, conv, f in zip(self.blocks[:l], self.convs_video[1:l+1], feats[1:l+1]):
+        for blk, conv, f in zip(self.blocks, self.convs_video, feats):
             x = blk(conv(self.flatten_video(f)), x)
-        y = self.convs_out[l-1](x)
+        y = self.conv_out(x)
         return y
 
     def flatten_video(self, f):
@@ -62,28 +56,19 @@ class VideoSegModel(nn.Module):
             tem_lens=tem_lens
         )
 
-    def forward(self, x, l):
+    def forward(self, x):
         feats = [x]
         x = self.encoder.stem(x)
         for i in range(3):
             layer = getattr(self.encoder, f'layer{i+1}')
             x = layer(x)
             feats.append(x)
-        out = self.decoder(*feats, l=l)
+        out = self.decoder(*feats)
         return out
-
-
-class SigmoidBeta(nn.Sigmoid):
-    def __init__(self, beta, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.beta = beta
-
-    def forward(self, x):
-        return super().forward(self.beta*x)
-
+        
 
 class P2VNet(nn.Module):
-    def __init__(self, in_ch, video_len=8, beta=0.1, k=3):
+    def __init__(self, in_ch, video_len=8):
         super().__init__()
         if video_len < 2:
             raise ValueError
@@ -93,25 +78,13 @@ class P2VNet(nn.Module):
             dec_chs=(128,64,32), 
             video_len=video_len
         )
-        self.act_rate = SigmoidBeta(beta)
-        if k > 3 or k < 1:
-            raise ValueError
-        self.k = k
     
-    def forward(self, t1, t2, k_dyn=None):
-        preds = []
-        rate_map = None
-        frames = None
-        k = self.k if k_dyn is None else k_dyn
-        for iter in range(k):
-            frames = self.pair_to_video(t1, t2, rate_map, frames, self.video_len>>1)
-            pred = self.seg_video(frames.transpose(1,2), 4-self.k+iter)
-            pred = F.interpolate(pred, size=t1.shape[2:])
-            preds.append(pred)
-            rate_map = self.act_rate(pred.detach())
-        return preds
+    def forward(self, t1, t2):
+        frames = self.pair_to_video(t1, t2)
+        pred = self.seg_video(frames.transpose(1,2))
+        return pred
 
-    def pair_to_video(self, im1, im2, rate_map, old_frames, shift):
+    def pair_to_video(self, im1, im2, rate_map=None):
         def _interpolate(im1, im2, rate_map, len):
             delta = 1.0/(len-1)
             delta_map = rate_map * delta
@@ -121,9 +94,5 @@ class P2VNet(nn.Module):
 
         if rate_map is None:
             rate_map = torch.ones_like(im1[:,0:1])
-        if old_frames is None:
-            frames = _interpolate(im1, im2, rate_map, self.video_len)
-        else:
-            interped = _interpolate(old_frames[:,shift], im2, rate_map, self.video_len-shift)
-            frames = torch.cat((old_frames[:,:shift], interped), dim=1)
+        frames = _interpolate(im1, im2, rate_map, self.video_len)
         return frames

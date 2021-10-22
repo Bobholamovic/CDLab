@@ -35,10 +35,9 @@ class P2VTrainer(CDTrainer):
             
             show_imgs_on_tb = self.tb_on and (i%self.tb_intvl == 0)
             
-            preds = self.model(t1, t2)
+            pred = self.model(t1, t2)
             
-            weights = [0.5**i for i in range(len(preds)-1,-1,-1)]
-            loss = sum(self.criterion(pred.squeeze(1), tar)*weight for pred, weight in zip(preds, weights)) / sum(weights)
+            loss = self.criterion(pred.squeeze(1), tar)
             losses.update(loss.item(), n=self.batch_size)
 
             self.optimizer.zero_grad()
@@ -101,10 +100,9 @@ class P2VTrainer(CDTrainer):
                 else:
                     preds = self.model(t1, t2)
                 
-                pred = preds[-1].squeeze(1)
-
-                weights = [0.5**i for i in range(len(preds)-1,-1,-1)]
-                loss = sum(self.criterion(pred.squeeze(1), tar)*weight for pred, weight in zip(preds, weights)) / sum(weights)
+                pred = self.model(t1, t2)
+                
+                loss = self.criterion(pred.squeeze(1), tar)
                 losses.update(loss.item())
 
                 # Convert to numpy arrays

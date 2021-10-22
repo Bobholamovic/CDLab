@@ -25,5 +25,3 @@ schedulers:
 p2v_model:
   in_ch: 3
   video_len: 8
-  beta: 0.1
-  k: 3
