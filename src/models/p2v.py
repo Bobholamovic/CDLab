@@ -7,17 +7,16 @@ from ._blocks import DecBlock, ResBlock, Conv3x3, BasicConv
 
 
 class VideoDecoder(nn.Module):
-    def __init__(self, enc_chs, dec_chs, tem_lens):
+    def __init__(self, enc_chs, dec_chs):
         super().__init__()
         if not len(enc_chs) == len(dec_chs)+1:
             raise ValueError
         enc_chs = enc_chs[::-1]
-        tem_lens = tem_lens[::-1]
 
         self.convs_video = nn.ModuleList(
             [
-                BasicConv(tem_len*ch, ch, 1, bn=True, act=True)
-                for tem_len, ch in zip(tem_lens, enc_chs)
+                BasicConv(2*ch, ch, 1, bn=True, act=True)
+                for ch in enc_chs
             ]
         )
         self.blocks = nn.ModuleList([
@@ -28,18 +27,18 @@ class VideoDecoder(nn.Module):
     
     def forward(self, *feats):
         feats = feats[::-1]
-        x = self.convs_video[0](self.flatten_video(feats[0]))
-        for blk, conv, f in zip(self.blocks, self.convs_video, feats):
-            x = blk(conv(self.flatten_video(f)), x)
+        x = self.convs_video[0](self.tem_aggr(feats[0]))
+        for blk, conv, f in zip(self.blocks, self.convs_video[1:], feats[1:]):
+            x = blk(conv(self.tem_aggr(f)), x)
         y = self.conv_out(x)
         return y
 
-    def flatten_video(self, f):
-        return f.flatten(1,2)
+    def tem_aggr(self, f):
+        return torch.cat([torch.mean(f, dim=2), torch.max(f, dim=2)[0]], dim=1)
 
 
 class VideoSegModel(nn.Module):
-    def __init__(self, in_ch, dec_chs, video_len):
+    def __init__(self, in_ch, dec_chs):
         super().__init__()
         if in_ch != 3:
             raise ValueError
@@ -49,11 +48,9 @@ class VideoSegModel(nn.Module):
         self.encoder.fc = nn.Identity()
         # Decoder
         enc_chs=(in_ch,64,128,256)
-        tem_lens=tuple(int(video_len*s) for s in (1.0,1.0,0.5,0.25))
         self.decoder = VideoDecoder(
             enc_chs=enc_chs, 
-            dec_chs=dec_chs, 
-            tem_lens=tem_lens
+            dec_chs=dec_chs
         )
 
     def forward(self, x):
@@ -73,10 +70,10 @@ class P2VNet(nn.Module):
         if video_len < 2:
             raise ValueError
         self.video_len = video_len
+        dec_chs=(128,64,32)
         self.seg_video = VideoSegModel(
             in_ch, 
-            dec_chs=(128,64,32), 
-            video_len=video_len
+            dec_chs
         )
     
     def forward(self, t1, t2):

@@ -91,16 +91,16 @@ class P2VTrainer(CDTrainer):
                     fetch_dict_fi = {
                         'seg_video.encoder': 'frames'
                     }
-                    fetch_dict_fo = {
-                        'act_rate': 'rate'
-                    }
+                    fetch_dict_fo = {}
                     with HookHelper(self.model, fetch_dict_fi, feats, 'forward_in'), \
                         HookHelper(self.model, fetch_dict_fo, feats, 'forward_out'):
                         pred = self.model(t1, t2)
                 else:
                     pred = self.model(t1, t2)
                 
-                loss = self.criterion(pred.squeeze(1), tar)
+                pred = pred.squeeze(1)
+
+                loss = self.criterion(pred, tar)
                 losses.update(loss.item())
 
                 # Convert to numpy arrays
@@ -132,10 +132,6 @@ class P2VTrainer(CDTrainer):
                         prob = quantize(to_array(torch.sigmoid(pred)))
                         self.tb_writer.add_image("Eval/prob", to_pseudo_color(prob), self.eval_step, dataformats='HWC')
                         self.tb_writer.add_image("Eval/cm", quantize(cm), self.eval_step, dataformats='HW')
-                        if 'rate' in feats.keys():
-                            for j in range(len(feats['rate'])):
-                                rate = quantize(to_array(feats['rate'][j][0]))
-                                self.tb_writer.add_image("Eval/rate_{}".format(j+1), to_pseudo_color(rate), self.eval_step, dataformats='HWC')
                     self.eval_step += 1
                 
                 if self.save:
