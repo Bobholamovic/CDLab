@@ -48,7 +48,7 @@ class VideoSegModel(nn.Module):
         self.encoder.fc = nn.Identity()
         # Decoder
         self.decoder = VideoDecoder(
-            enc_chs=(in_ch,enc_chs), 
+            enc_chs=(in_ch, *enc_chs), 
             dec_chs=dec_chs
         )
 
