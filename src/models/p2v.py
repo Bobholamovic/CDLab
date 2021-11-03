@@ -11,6 +11,7 @@ class SimpleDecoder(nn.Module):
         super().__init__()
         
         enc_chs = enc_chs[::-1]
+        self.conv_bottom = Conv3x3(itm_ch, itm_ch, bn=True, act=True)
         self.blocks = nn.ModuleList([
             DecBlock(in_ch1, in_ch2, out_ch)
             for in_ch1, in_ch2, out_ch in zip(enc_chs, (itm_ch,)+dec_chs[:-1], dec_chs)
@@ -20,6 +21,8 @@ class SimpleDecoder(nn.Module):
     def forward(self, x, feats):
         feats = feats[::-1]
         
+        x = self.conv_bottom(x)
+
         for feat, blk in zip(feats, self.blocks):
             x = blk(feat, x)
 
@@ -61,15 +64,16 @@ class PairEncoder(nn.Module):
 
 
 class VideoEncoder(nn.Module):
-    def __init__(self, in_ch, enc_chs=(64,128,256), arch='r3d_18'):
+    def __init__(self, in_ch, enc_chs=(64,128), arch='r3d_18'):
         super().__init__()
-        if in_ch != 3 or enc_chs != (64,128,256):
+        if in_ch != 3 or enc_chs != (64,128):
             raise NotImplementedError
 
-        self.num_layers = 3
+        self.num_layers = 2
 
         enc_cls = getattr(models.video, arch)
         self.encoder = enc_cls(pretrained=True)
+        self.encoder.layer3 = nn.Identity()
         self.encoder.layer4 = nn.Identity()
         self.encoder.fc = nn.Identity()
 
@@ -86,34 +90,40 @@ class VideoEncoder(nn.Module):
         
 
 class P2VNet(nn.Module):
-    def __init__(self, in_ch, video_len=8, enc_chs_p=(32,64,128), enc_chs_v=(64,128,256), dec_chs=(256,128,64,32)):
+    def __init__(self, in_ch, video_len=8, enc_chs_p=(32,64,128), enc_chs_v=(64,128), dec_chs=(256,128,64,32)):
         super().__init__()
         if video_len < 2:
             raise ValueError
         self.video_len = video_len
-        self.encoder_p = PairEncoder(in_ch, enc_chs=enc_chs_p, add_chs=enc_chs_v[:-1])
+        self.encoder_p = PairEncoder(in_ch, enc_chs=enc_chs_p, add_chs=enc_chs_v)
         self.encoder_v = VideoEncoder(in_ch, enc_chs=enc_chs_v)
+        self.conv_out_v = BasicConv(enc_chs_v[-1], 1, 1)
         self.convs_video = nn.ModuleList(
             [
                 BasicConv(2*ch, ch, 1, bn=True, act=True)
                 for ch in enc_chs_v
             ]
         )
-        self.decoder = SimpleDecoder(enc_chs_v[-1], (2*in_ch,)+enc_chs_p, dec_chs)
+        self.decoder = SimpleDecoder(enc_chs_p[-1], (2*in_ch,)+enc_chs_p, dec_chs)
     
     def forward(self, t1, t2):
-        frames = self.pair_to_video(F.interpolate(t1, scale_factor=0.5), F.interpolate(t2, scale_factor=0.5))
+        frames = self.pair_to_video(t1, t2)
         feats_v = self.encoder_v(frames.transpose(1,2))
         feats_v.pop(0)
 
         for i, feat in enumerate(feats_v):
             feats_v[i] = self.convs_video[i](self.tem_aggr(feat))
 
-        feats_p = self.encoder_p(t1, t2, feats_v[:-1])
+        feats_p = self.encoder_p(t1, t2, feats_v)
 
-        pred = self.decoder(F.interpolate(feats_v[-1], feats_p[-1].shape[2:]), feats_p)
+        pred = self.decoder(feats_p[-1], feats_p)
 
-        return pred
+        if self.training:
+            pred_v = self.conv_out_v(feats_v[-1])
+            pred_v = F.interpolate(pred_v, size=pred.shape[2:])
+            return pred, pred_v
+        else:
+            return pred
 
     def pair_to_video(self, im1, im2, rate_map=None):
         def _interpolate(im1, im2, rate_map, len):

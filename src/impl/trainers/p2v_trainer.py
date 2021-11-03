@@ -35,9 +35,9 @@ class P2VTrainer(CDTrainer):
             
             show_imgs_on_tb = self.tb_on and (i%self.tb_intvl == 0)
             
-            pred = self.model(t1, t2)
+            pred, pred_v = self.model(t1, t2)
             
-            loss = self.criterion(pred.squeeze(1), tar)
+            loss = self.criterion(pred.squeeze(1), tar) + 0.1*self.criterion(pred_v.squeeze(1), tar)
             losses.update(loss.item(), n=self.batch_size)
 
             self.optimizer.zero_grad()
@@ -161,3 +161,10 @@ class P2VTrainer(CDTrainer):
             underline=True
         )
         return save_gif(out_path, images)
+
+    def init_learning_rate(self):
+        lr = super().init_learning_rate()
+        for group in self.optimizer.param_groups:
+            if group['name'] == 'encoder_v':
+                group['lr'] *= 0.25
+        return lr
