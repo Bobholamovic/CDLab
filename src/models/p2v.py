@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision import models
 
 from ._blocks import (DecBlock, ResBlock, ResBlock2, Conv3x3, MaxPool2x2, BasicConv)
 
@@ -88,16 +87,18 @@ class Conv3x3x3(BasicConv3D):
 
 
 class ResBlock3D(nn.Module):
-    def __init__(self, in_ch, out_ch, stride=1, ds=None):
+    def __init__(self, in_ch, out_ch, itm_ch, stride=1, ds=None):
         super().__init__()
-        self.conv1 = Conv3x3x3(in_ch, out_ch, bn=True, act=True, stride=stride)
-        self.conv2 = Conv3x3x3(out_ch, out_ch, bn=True, act=False)
+        self.conv1 = BasicConv3D(in_ch, itm_ch, 1, bn=True, act=True, stride=stride)
+        self.conv2 = Conv3x3x3(itm_ch, itm_ch, bn=True, act=True)
+        self.conv3 = BasicConv3D(itm_ch, out_ch, 1, bn=True, act=False)
         self.ds = ds
         
     def forward(self, x):
         res = x
         y = self.conv1(x)
         y = self.conv2(y)
+        y = self.conv3(y)
         if self.ds is not None:
             res = self.ds(res)
         y = F.relu(y+res)
@@ -111,19 +112,21 @@ class VideoEncoder(nn.Module):
             raise NotImplementedError
 
         self.num_layers = 2
+        self.expansion = 4
 
         self.stem = nn.Sequential(
-            nn.Conv3d(3, enc_chs[0], kernel_size=(3,7,7), stride=(1,2,2), padding=(1,3,3), bias=False),
+            nn.Conv3d(3, enc_chs[0], kernel_size=(3,9,9), stride=(1,4,4), padding=(1,4,4), bias=False),
             nn.BatchNorm3d(enc_chs[0]),
             nn.ReLU(True)
         )
+        exps = self.expansion
         self.layer1 = nn.Sequential(
-            ResBlock3D(enc_chs[0], enc_chs[0]),
-            ResBlock3D(enc_chs[0], enc_chs[0])
+            ResBlock3D(enc_chs[0], enc_chs[0]*exps, enc_chs[0], ds=BasicConv3D(enc_chs[0], enc_chs[0]*exps, 1, bn=True)),
+            ResBlock3D(enc_chs[0]*exps, enc_chs[0]*exps, enc_chs[0])
         )
         self.layer2 = nn.Sequential(
-            ResBlock3D(enc_chs[0], enc_chs[1], stride=(2,2,2), ds=BasicConv3D(enc_chs[0], enc_chs[1], 1, stride=(2,2,2), bn=True)),
-            ResBlock3D(enc_chs[1], enc_chs[1]),
+            ResBlock3D(enc_chs[0]*exps, enc_chs[1]*exps, enc_chs[1], stride=(2,2,2), ds=BasicConv3D(enc_chs[0]*exps, enc_chs[1]*exps, 1, stride=(2,2,2), bn=True)),
+            ResBlock3D(enc_chs[1]*exps, enc_chs[1]*exps, enc_chs[1])
         )
 
     def forward(self, x):
@@ -139,13 +142,14 @@ class VideoEncoder(nn.Module):
         
 
 class P2VNet(nn.Module):
-    def __init__(self, in_ch, video_len=8, enc_chs_p=(32,64,128), enc_chs_v=(32,64), dec_chs=(256,128,64,32)):
+    def __init__(self, in_ch, video_len=8, enc_chs_p=(32,64,128), enc_chs_v=(64,128), dec_chs=(256,128,64,32)):
         super().__init__()
         if video_len < 2:
             raise ValueError
         self.video_len = video_len
-        self.encoder_p = PairEncoder(in_ch, enc_chs=enc_chs_p, add_chs=enc_chs_v)
         self.encoder_v = VideoEncoder(in_ch, enc_chs=enc_chs_v)
+        enc_chs_v = tuple(ch*self.encoder_v.expansion for ch in enc_chs_v)
+        self.encoder_p = PairEncoder(in_ch, enc_chs=enc_chs_p, add_chs=enc_chs_v)
         self.conv_out_v = BasicConv(enc_chs_v[-1], 1, 1)
         self.convs_video = nn.ModuleList(
             [
