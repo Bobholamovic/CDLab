@@ -159,7 +159,7 @@ class P2VNet(nn.Module):
         )
         self.decoder = SimpleDecoder(enc_chs_p[-1], (2*in_ch,)+enc_chs_p, dec_chs)
     
-    def forward(self, t1, t2):
+    def forward(self, t1, t2, return_aux=False):
         frames = self.pair_to_video(t1, t2)
         feats_v = self.encoder_v(frames.transpose(1,2))
         feats_v.pop(0)
@@ -171,7 +171,7 @@ class P2VNet(nn.Module):
 
         pred = self.decoder(feats_p[-1], feats_p)
 
-        if self.training:
+        if return_aux:
             pred_v = self.conv_out_v(feats_v[-1])
             pred_v = F.interpolate(pred_v, size=pred.shape[2:])
             return pred, pred_v
@@ -195,44 +195,56 @@ class P2VNet(nn.Module):
         return torch.cat([torch.mean(f, dim=2), torch.max(f, dim=2)[0]], dim=1)
 
 
+# # 2donly
 # class VideoEncoder(nn.Module):
-#     def __init__(self, in_ch, enc_chs=(64,64,128), arch='r3d_18'):
+#     def __init__(self, in_ch, enc_chs=(64,128)):
 #         super().__init__()
-#         if in_ch != 3 or enc_chs != (64,64,128):
+#         if in_ch != 3:
 #             raise NotImplementedError
 
-#         self.num_layers = 3
+#         self.num_layers = 2
+#         self.expansion = 4
 
-#         enc_cls = getattr(models.video, arch)
-#         self.encoder = enc_cls(pretrained=True)
-#         self.encoder.layer3 = self.encoder.layer2
-#         import copy
-#         self.encoder.layer2 = nn.Sequential(
-#             nn.MaxPool3d(2, 2, 0),
-#             copy.deepcopy(self.encoder.layer1)
+#         self.stem = nn.Sequential(
+#             nn.Conv3d(3, enc_chs[0], kernel_size=(1,9,9), stride=(1,4,4), padding=(0,4,4), bias=False),
+#             nn.BatchNorm3d(enc_chs[0]),
+#             nn.ReLU(True)
 #         )
-#         self.encoder.layer4 = nn.Identity()
-#         self.encoder.fc = nn.Identity()
+#         exps = self.expansion
+#         self.layer1 = nn.Sequential(
+#             ResBlock3D(enc_chs[0], enc_chs[0]*exps, enc_chs[0], ds=BasicConv3D(enc_chs[0], enc_chs[0]*exps, 1, bn=True)),
+#             ResBlock3D(enc_chs[0]*exps, enc_chs[0]*exps, enc_chs[0])
+#         )
+#         self.layer1[0].conv2.seq[0] = nn.Conv3d(enc_chs[0], enc_chs[0], (1,3,3), padding=(0,1,1))
+#         self.layer1[1].conv2.seq[0] = nn.Conv3d(enc_chs[0], enc_chs[0], (1,3,3), padding=(0,1,1))
+#         self.layer2 = nn.Sequential(
+#             ResBlock3D(enc_chs[0]*exps, enc_chs[1]*exps, enc_chs[1], stride=(2,2,2), ds=BasicConv3D(enc_chs[0]*exps, enc_chs[1]*exps, 1, stride=(2,2,2), bn=True)),
+#             ResBlock3D(enc_chs[1]*exps, enc_chs[1]*exps, enc_chs[1])
+#         )
+#         self.layer2[0].conv2.seq[0] = nn.Conv3d(enc_chs[1], enc_chs[1], (1,3,3), padding=(0,1,1))
+#         self.layer2[1].conv2.seq[0] = nn.Conv3d(enc_chs[1], enc_chs[1], (1,3,3), padding=(0,1,1))
 
 #     def forward(self, x):
 #         feats = [x]
 
-#         x = self.encoder.stem(x)
+#         x = self.stem(x)
 #         for i in range(self.num_layers):
-#             layer = getattr(self.encoder, f'layer{i+1}')
+#             layer = getattr(self, f'layer{i+1}')
 #             x = layer(x)
 #             feats.append(x)
 
 #         return feats
-
+        
 
 # class P2VNet(nn.Module):
-#     def __init__(self, in_ch, video_len=8, enc_chs_v=(64,64,128), dec_chs=(256,128,64,32)):
+#     def __init__(self, in_ch, video_len=8, enc_chs_p=(32,64,128), enc_chs_v=(64,164), dec_chs=(256,128,64,32)):
 #         super().__init__()
 #         if video_len < 2:
 #             raise ValueError
 #         self.video_len = video_len
 #         self.encoder_v = VideoEncoder(in_ch, enc_chs=enc_chs_v)
+#         enc_chs_v = tuple(ch*self.encoder_v.expansion for ch in enc_chs_v)
+#         self.encoder_p = PairEncoder(in_ch, enc_chs=enc_chs_p, add_chs=enc_chs_v)
 #         self.conv_out_v = BasicConv(enc_chs_v[-1], 1, 1)
 #         self.convs_video = nn.ModuleList(
 #             [
@@ -240,18 +252,21 @@ class P2VNet(nn.Module):
 #                 for ch in enc_chs_v
 #             ]
 #         )
-#         self.decoder = SimpleDecoder(enc_chs_v[-1], (video_len*in_ch,)+enc_chs_v, dec_chs)
+#         self.decoder = SimpleDecoder(enc_chs_p[-1], (2*in_ch,)+enc_chs_p, dec_chs)
     
-#     def forward(self, t1, t2):
+#     def forward(self, t1, t2, return_aux=False):
 #         frames = self.pair_to_video(t1, t2)
 #         feats_v = self.encoder_v(frames.transpose(1,2))
+#         feats_v.pop(0)
 
-#         for i, feat in enumerate(feats_v[1:]):
-#             feats_v[i+1] = self.convs_video[i](self.tem_aggr(feat))
-#         feats_v[0] = torch.flatten(feats_v[0], 1, 2)
-#         pred = self.decoder(feats_v[-1], feats_v)
+#         for i, feat in enumerate(feats_v):
+#             feats_v[i] = self.convs_video[i](self.tem_aggr(feat))
 
-#         if self.training:
+#         feats_p = self.encoder_p(t1, t2, feats_v)
+
+#         pred = self.decoder(feats_p[-1], feats_p)
+
+#         if return_aux:
 #             pred_v = self.conv_out_v(feats_v[-1])
 #             pred_v = F.interpolate(pred_v, size=pred.shape[2:])
 #             return pred, pred_v
@@ -275,81 +290,53 @@ class P2VNet(nn.Module):
 #         return torch.cat([torch.mean(f, dim=2), torch.max(f, dim=2)[0]], dim=1)
 
 
-# class VideoEncoder(nn.Module):
-#     def __init__(self, in_ch, enc_chs=(64,128), arch='r3d_18'):
-#         super().__init__()
-
-#         self.num_layers = 2
-
-#         enc_cls = getattr(models.video, arch)
-#         self.encoder = enc_cls(pretrained=True)
-#         self.encoder.layer3 = nn.Identity()
-#         self.encoder.layer4 = nn.Identity()
-#         self.encoder.fc = nn.Identity()
-
-#         self.encoder.stem[0] = nn.Conv3d(3, enc_chs[0], kernel_size=(1,7,7), stride=(1,2,2), padding=(0,3,3), bias=False)
-#         self.encoder.stem[1] = nn.BatchNorm3d(enc_chs[0], eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
-#         self.encoder.layer1[0].conv1[0] = nn.Conv3d(enc_chs[0], enc_chs[0], kernel_size=(1,3,3), stride=(1,1,1), padding=(0,1,1), bias=False)
-#         self.encoder.layer1[0].conv1[1] = nn.BatchNorm3d(enc_chs[0], eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
-#         self.encoder.layer1[0].conv2[0] = nn.Conv3d(enc_chs[0], enc_chs[0], kernel_size=(1,3,3), stride=(1,1,1), padding=(0,1,1), bias=False)
-#         self.encoder.layer1[0].conv2[1] = nn.BatchNorm3d(enc_chs[0], eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
-#         self.encoder.layer1[1].conv1[0] = nn.Conv3d(enc_chs[0], enc_chs[0], kernel_size=(1,3,3), stride=(1,1,1), padding=(0,1,1), bias=False)
-#         self.encoder.layer1[1].conv1[1] = nn.BatchNorm3d(enc_chs[0], eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
-#         self.encoder.layer1[1].conv2[0] = nn.Conv3d(enc_chs[0], enc_chs[0], kernel_size=(1,3,3), stride=(1,1,1), padding=(0,1,1), bias=False)
-#         self.encoder.layer1[1].conv2[1] = nn.BatchNorm3d(enc_chs[0], eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
-#         self.encoder.layer2[0].conv1[0] = nn.Conv3d(enc_chs[0], enc_chs[1], kernel_size=(1,3,3), stride=(2,2,2), padding=(0,1,1), bias=False)
-#         self.encoder.layer2[0].conv1[1] = nn.BatchNorm3d(enc_chs[1], eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
-#         self.encoder.layer2[0].conv2[0] = nn.Conv3d(enc_chs[1], enc_chs[1], kernel_size=(1,3,3), stride=(1,1,1), padding=(0,1,1), bias=False)
-#         self.encoder.layer2[0].conv2[1] = nn.BatchNorm3d(enc_chs[1], eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
-#         self.encoder.layer2[0].downsample[0] = nn.Conv3d(enc_chs[0], enc_chs[1], kernel_size=(1,1,1), stride=(2,2,2), padding=(0,0,0), bias=False)
-#         self.encoder.layer2[0].downsample[1] = nn.BatchNorm3d(enc_chs[1], eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
-#         self.encoder.layer2[1].conv1[0] = nn.Conv3d(enc_chs[1], enc_chs[1], kernel_size=(1,3,3), stride=(1,1,1), padding=(0,1,1), bias=False)
-#         self.encoder.layer2[1].conv1[1] = nn.BatchNorm3d(enc_chs[1], eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
-#         self.encoder.layer2[1].conv2[0] = nn.Conv3d(enc_chs[1], enc_chs[1], kernel_size=(1,3,3), stride=(1,1,1), padding=(0,1,1), bias=False)
-#         self.encoder.layer2[1].conv2[1] = nn.BatchNorm3d(enc_chs[1], eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
-
-#     def forward(self, x):
-#         feats = [x]
-
-#         x = self.encoder.stem(x)
-#         for i in range(self.num_layers):
-#             layer = getattr(self.encoder, f'layer{i+1}')
-#             x = layer(x)
-#             feats.append(x)
-
-#         return feats
-
-
+# # No temporal
 # class P2VNet(nn.Module):
-#     def __init__(self, in_ch, video_len=8, enc_chs_p=(32,64,128), enc_chs_v=(64,240), dec_chs=(256,128,64,32)):
+#     def __init__(self, in_ch, video_len=8, enc_chs_p=(64,128,256), enc_chs_v=(64,128), dec_chs=(256,128,64,32)):
+#         super().__init__()
+#         self.encoder_p = PairEncoder(in_ch, enc_chs=enc_chs_p)
+#         self.conv_out_v = BasicConv(enc_chs_p[-1], 1, 1)
+#         self.decoder = SimpleDecoder(enc_chs_p[-1], (2*in_ch,)+enc_chs_p, dec_chs)
+    
+#     def forward(self, t1, t2, return_aux=False):
+#         feats_p = self.encoder_p(t1, t2)
+
+#         pred = self.decoder(feats_p[-1], feats_p)
+
+#         if return_aux:
+#             pred_v = self.conv_out_v(feats_p[-1])
+#             pred_v = F.interpolate(pred_v, size=pred.shape[2:])
+#             return pred, pred_v
+#         else:
+#             return pred
+
+
+# # latefusion
+# class P2VNet(nn.Module):
+#     def __init__(self, in_ch, video_len=8, enc_chs_p=(32,64,64), enc_chs_v=(64,64), dec_chs=(256,128,64,32)):
 #         super().__init__()
 #         if video_len < 2:
 #             raise ValueError
 #         self.video_len = video_len
-#         self.encoder_p = PairEncoder(in_ch, enc_chs=enc_chs_p, add_chs=enc_chs_v)
 #         self.encoder_v = VideoEncoder(in_ch, enc_chs=enc_chs_v)
+#         enc_chs_v = tuple(ch*self.encoder_v.expansion for ch in enc_chs_v)
+#         self.encoder_p = PairEncoder(in_ch, enc_chs=enc_chs_p)
 #         self.conv_out_v = BasicConv(enc_chs_v[-1], 1, 1)
-#         self.convs_video = nn.ModuleList(
-#             [
-#                 BasicConv(2*ch, ch, 1, bn=True, act=True)
-#                 for ch in enc_chs_v
-#             ]
-#         )
-#         self.decoder = SimpleDecoder(enc_chs_p[-1], (2*in_ch,)+enc_chs_p, dec_chs)
+#         self.conv_video = BasicConv(2*enc_chs_v[-1], enc_chs_v[-1], 1, bn=True, act=True)
+#         self.decoder = SimpleDecoder(enc_chs_p[-1]+enc_chs_v[-1], (2*in_ch,)+enc_chs_p, dec_chs)
     
-#     def forward(self, t1, t2):
+#     def forward(self, t1, t2, return_aux=False):
 #         frames = self.pair_to_video(t1, t2)
 #         feats_v = self.encoder_v(frames.transpose(1,2))
 #         feats_v.pop(0)
 
-#         for i, feat in enumerate(feats_v):
-#             feats_v[i] = self.convs_video[i](self.tem_aggr(feat))
+#         feats_v[-1] = self.conv_video(self.tem_aggr(feats_v[-1]))
 
-#         feats_p = self.encoder_p(t1, t2, feats_v)
+#         feats_p = self.encoder_p(t1, t2)
 
-#         pred = self.decoder(feats_p[-1], feats_p)
+#         pred = self.decoder(torch.cat((feats_p[-1], F.interpolate(feats_v[-1], feats_p[-1].shape[2:])), 1), feats_p)
 
-#         if self.training:
+#         if return_aux:
 #             pred_v = self.conv_out_v(feats_v[-1])
 #             pred_v = F.interpolate(pred_v, size=pred.shape[2:])
 #             return pred, pred_v
@@ -368,6 +355,142 @@ class P2VNet(nn.Module):
 #             rate_map = torch.ones_like(im1[:,0:1])
 #         frames = _interpolate(im1, im2, rate_map, self.video_len)
 #         return frames
+
+#     def tem_aggr(self, f):
+#         return torch.cat([torch.mean(f, dim=2), torch.max(f, dim=2)[0]], dim=1)
+
+
+# # preds
+# class VideoEncoder(nn.Module):
+#     def __init__(self, in_ch, enc_chs=(64,128)):
+#         super().__init__()
+#         if in_ch != 3:
+#             raise NotImplementedError
+
+#         self.num_layers = 2
+#         self.expansion = 4
+
+#         self.stem = nn.Sequential(
+#             nn.Conv3d(3, enc_chs[0], kernel_size=(3,9,9), stride=(1,2,2), padding=(1,4,4), bias=False),
+#             nn.BatchNorm3d(enc_chs[0]),
+#             nn.ReLU(True)
+#         )
+#         exps = self.expansion
+#         self.layer1 = nn.Sequential(
+#             ResBlock3D(enc_chs[0], enc_chs[0]*exps, enc_chs[0], ds=BasicConv3D(enc_chs[0], enc_chs[0]*exps, 1, bn=True)),
+#             ResBlock3D(enc_chs[0]*exps, enc_chs[0]*exps, enc_chs[0])
+#         )
+#         self.layer2 = nn.Sequential(
+#             ResBlock3D(enc_chs[0]*exps, enc_chs[1]*exps, enc_chs[1], stride=(2,2,2), ds=BasicConv3D(enc_chs[0]*exps, enc_chs[1]*exps, 1, stride=(2,2,2), bn=True)),
+#             ResBlock3D(enc_chs[1]*exps, enc_chs[1]*exps, enc_chs[1])
+#         )
+
+#     def forward(self, x):
+#         feats = [x]
+
+#         x = self.stem(x)
+#         for i in range(self.num_layers):
+#             layer = getattr(self, f'layer{i+1}')
+#             x = layer(x)
+#             feats.append(x)
+
+#         return feats
+
+
+# class P2VNet(nn.Module):
+#     def __init__(self, in_ch, video_len=8, enc_chs_p=(32,64,128), enc_chs_v=(64,128), dec_chs=(256,128,64,32)):
+#         super().__init__()
+#         if video_len < 2:
+#             raise ValueError
+#         self.video_len = video_len
+#         self.encoder_v = VideoEncoder(in_ch, enc_chs=enc_chs_v)
+#         enc_chs_v = tuple(ch*self.encoder_v.expansion for ch in enc_chs_v)
+#         self.encoder_p = PairEncoder(in_ch, enc_chs=enc_chs_p, add_chs=enc_chs_v)
+#         self.conv_out_v = BasicConv(enc_chs_v[-1], 1, 1)
+#         self.convs_video = nn.ModuleList(
+#             [
+#                 BasicConv(2*ch, ch, 1, bn=True, act=True)
+#                 for ch in enc_chs_v
+#             ]
+#         )
+#         self.decoder = SimpleDecoder(enc_chs_p[-1], (2*in_ch,)+enc_chs_p, dec_chs)
+    
+#     def forward(self, t1, t2, return_aux=False):
+#         frames = self.pair_to_video(F.interpolate(t1, scale_factor=0.5), F.interpolate(t2, scale_factor=0.5))
+#         feats_v = self.encoder_v(frames.transpose(1,2))
+#         feats_v.pop(0)
+
+#         for i, feat in enumerate(feats_v):
+#             feats_v[i] = self.convs_video[i](self.tem_aggr(feat))
+
+#         feats_p = self.encoder_p(t1, t2, feats_v)
+
+#         pred = self.decoder(feats_p[-1], feats_p)
+
+#         if return_aux:
+#             pred_v = self.conv_out_v(feats_v[-1])
+#             pred_v = F.interpolate(pred_v, size=pred.shape[2:])
+#             return pred, pred_v
+#         else:
+#             return pred
+
+#     def pair_to_video(self, im1, im2, rate_map=None):
+#         def _interpolate(im1, im2, rate_map, len):
+#             delta = 1.0/(len-1)
+#             delta_map = rate_map * delta
+#             steps = torch.arange(len, dtype=torch.float, device=delta_map.device).view(1,-1,1,1,1)
+#             interped = im1.unsqueeze(1)+((im2-im1)*delta_map).unsqueeze(1)*steps
+#             return interped
+
+#         if rate_map is None:
+#             rate_map = torch.ones_like(im1[:,0:1])
+#         frames = _interpolate(im1, im2, rate_map, self.video_len)
+#         return frames
+
+#     def tem_aggr(self, f):
+#         return torch.cat([torch.mean(f, dim=2), torch.max(f, dim=2)[0]], dim=1)
+
+
+# # halfhalf
+# class P2VNet(nn.Module):
+#     def __init__(self, in_ch, video_len=8, enc_chs_p=(32,64,128), enc_chs_v=(64,128), dec_chs=(256,128,64,32)):
+#         super().__init__()
+#         if video_len < 2:
+#             raise ValueError
+#         self.video_len = video_len
+#         self.encoder_v = VideoEncoder(in_ch, enc_chs=enc_chs_v)
+#         enc_chs_v = tuple(ch*self.encoder_v.expansion for ch in enc_chs_v)
+#         self.encoder_p = PairEncoder(in_ch, enc_chs=enc_chs_p, add_chs=enc_chs_v)
+#         self.conv_out_v = BasicConv(enc_chs_v[-1], 1, 1)
+#         self.convs_video = nn.ModuleList(
+#             [
+#                 BasicConv(2*ch, ch, 1, bn=True, act=True)
+#                 for ch in enc_chs_v
+#             ]
+#         )
+#         self.decoder = SimpleDecoder(enc_chs_p[-1], (2*in_ch,)+enc_chs_p, dec_chs)
+    
+#     def forward(self, t1, t2, return_aux=False):
+#         frames = self.pair_to_video(t1, t2)
+#         feats_v = self.encoder_v(frames.transpose(1,2))
+#         feats_v.pop(0)
+
+#         for i, feat in enumerate(feats_v):
+#             feats_v[i] = self.convs_video[i](self.tem_aggr(feat))
+
+#         feats_p = self.encoder_p(t1, t2, feats_v)
+
+#         pred = self.decoder(feats_p[-1], feats_p)
+
+#         if return_aux:
+#             pred_v = self.conv_out_v(feats_v[-1])
+#             pred_v = F.interpolate(pred_v, size=pred.shape[2:])
+#             return pred, pred_v
+#         else:
+#             return pred
+
+#     def pair_to_video(self, im1, im2, rate_map=None):
+#         return torch.stack([im1]*(self.video_len//2)+[im2]*(self.video_len//2), dim=1)
 
 #     def tem_aggr(self, f):
 #         return torch.cat([torch.mean(f, dim=2), torch.max(f, dim=2)[0]], dim=1)
