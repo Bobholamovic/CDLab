@@ -4,27 +4,27 @@
 # Data
 dataset: LEVIR-CD
 num_workers: 2
-repeats: 7
+repeats: 2
 subset: val
 crop_size: 256
 
 
 # Optimizer
 optimizer: Adam
-lr: 0.0004
+lr: 0.002
 weight_decay: 0.0
 load_optim: False
 save_optim: False
 sched_on: True
 schedulers:
   - name: StepLR
-    step_size: 10
-    gamma: 0.1
+    step_size: 30
+    gamma: 0.2
 
 
 # Training related
 batch_size: 8
-num_epochs: 30
+num_epochs: 100
 resume: ''
 anew: False
 device: cuda

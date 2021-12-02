@@ -23,8 +23,7 @@ class P2VTrainer(CDTrainer):
 
     def train_epoch(self, epoch):
         losses = Meter()
-        losses_aux_v = Meter()
-        losses_aux_p = Meter()
+        losses_aux = Meter()
         len_train = len(self.train_loader)
         width = len(str(len_train))
         start_pattern = "[{{:>{0}}}/{{:>{0}}}]".format(width)
@@ -33,31 +32,26 @@ class P2VTrainer(CDTrainer):
         self.model.train()
         
         for i, (t1, t2, tar) in enumerate(pb):
-            # if tar.sum() == 0:
-            #     continue
             t1, t2, tar = t1.to(self.device), t2.to(self.device), tar.to(self.device)
             tar = tar.float()
             
             show_imgs_on_tb = self.tb_on and (i%self.tb_intvl == 0)
             
-            pred, pred_v, pred_p = self.model(t1, t2, return_aux=True)
+            pred, pred_v = self.model(t1, t2, return_aux=True)
 
             loss = self.criterion(pred.squeeze(1), tar)
-            loss_aux_v = self.criterion(pred_v.squeeze(1), tar)
-            loss_aux_p = self.criterion(pred_p.squeeze(1), tar)
+            loss_aux = self.criterion(pred_v.squeeze(1), tar)
             losses.update(loss.item(), n=self.batch_size)
-            losses_aux_v.update(loss_aux_v.item(), n=self.batch_size)
-            losses_aux_p.update(loss_aux_p.item(), n=self.batch_size)
+            losses_aux.update(loss_aux.item(), n=self.batch_size)
 
             self.optimizer.zero_grad()
-            (loss+self.lambda_*loss_aux_v+self.lambda_*loss_aux_p).backward()
+            (loss+self.lambda_*loss_aux).backward()
             self.optimizer.step()
 
-            desc = (start_pattern+" Loss: {:.4f} ({:.4f}) Loss_aux_v: {:.4f} ({:.4f}) Loss_aux_p: {:.4f} ({:.4f})").format(
+            desc = (start_pattern+" Loss: {:.4f} ({:.4f}) Loss_aux: {:.4f} ({:.4f})").format(
                     i+1, len_train, 
                     losses.val, losses.avg,
-                    losses_aux_v.val, losses_aux_v.avg,
-                    losses_aux_p.val, losses_aux_p.avg,
+                    losses_aux.val, losses_aux.avg
                 )
 
             pb.set_description(desc)
@@ -67,8 +61,7 @@ class P2VTrainer(CDTrainer):
             if self.tb_on:
                 # Write to tensorboard
                 self.tb_writer.add_scalar("Train/running_loss", losses.val, self.train_step)
-                self.tb_writer.add_scalar("Train/running_loss_aux_v", losses_aux_v.val, self.train_step)
-                self.tb_writer.add_scalar("Train/running_loss_aux_p", losses_aux_p.val, self.train_step)
+                self.tb_writer.add_scalar("Train/running_loss_aux", losses_aux.val, self.train_step)
                 if show_imgs_on_tb:
                     t1 = self.denorm(to_array(t1.detach()[0])).astype('uint8')
                     t2 = self.denorm(to_array(t2.detach()[0])).astype('uint8')
@@ -80,14 +73,12 @@ class P2VTrainer(CDTrainer):
             
         if self.tb_on:
             self.tb_writer.add_scalar("Train/loss", losses.avg, self.train_step)
-            self.tb_writer.add_scalar("Train/loss_aux_v", losses_aux_v.avg, self.train_step)
-            self.tb_writer.add_scalar("Train/loss_aux_p", losses_aux_p.avg, self.train_step)
+            self.tb_writer.add_scalar("Train/loss_aux", losses_aux.avg, self.train_step)
 
     def evaluate_epoch(self, epoch):
         self.logger.show_nl("Epoch: [{0}]".format(epoch))
         losses = Meter()
-        losses_aux_v = Meter()
-        losses_aux_p = Meter()
+        losses_aux = Meter()
         len_eval = len(self.eval_loader)
         width = len(str(len_eval))
         start_pattern = "[{{:>{0}}}/{{:>{0}}}]".format(width)
@@ -111,18 +102,16 @@ class P2VTrainer(CDTrainer):
                     fetch_dict_fo = {}
                     with HookHelper(self.model, fetch_dict_fi, feats, 'forward_in'), \
                         HookHelper(self.model, fetch_dict_fo, feats, 'forward_out'):
-                        pred, pred_v, pred_p = self.model(t1, t2, return_aux=True)
+                        pred, pred_v = self.model(t1, t2, return_aux=True)
                 else:
-                    pred, pred_v, pred_p = self.model(t1, t2, return_aux=True)
+                    pred, pred_v = self.model(t1, t2, return_aux=True)
                 
                 pred = pred.squeeze(1)
 
                 loss = self.criterion(pred, tar)
-                loss_aux_v = self.criterion(pred_v.squeeze(1), tar)
-                loss_aux_p = self.criterion(pred_p.squeeze(1), tar)
+                loss_aux = self.criterion(pred_v.squeeze(1), tar)
                 losses.update(loss.item())
-                losses_aux_v.update(loss_aux_v.item())
-                losses_aux_p.update(loss_aux_p.item())
+                losses_aux.update(loss_aux.item())
 
                 # Convert to numpy arrays
                 cm = to_array(torch.sigmoid(pred[0])>self.thresh).astype('uint8')
@@ -131,11 +120,10 @@ class P2VTrainer(CDTrainer):
                 for m in metrics:
                     m.update(cm, tar)
 
-                desc = (start_pattern+" Loss: {:.4f} ({:.4f}) Loss_aux_v: {:.4f} ({:.4f}) Loss_aux_p: {:.4f} ({:.4f})").format(
+                desc = (start_pattern+" Loss: {:.4f} ({:.4f}) Loss_aux: {:.4f} ({:.4f})").format(
                     i+1, len_eval, 
                     losses.val, losses.avg,
-                    losses_aux_v.val, losses_aux_v.avg,
-                    losses_aux_p.val, losses_aux_p.avg
+                    losses_aux.val, losses_aux.avg
                 )
                 for m in metrics:
                     desc += " {} {:.4f}".format(m.__name__, m.val)
@@ -166,8 +154,7 @@ class P2VTrainer(CDTrainer):
 
         if self.tb_on:
             self.tb_writer.add_scalar("Eval/loss", losses.avg, self.eval_step)
-            self.tb_writer.add_scalar("Eval/loss_aux_v", losses_aux_v.avg, self.eval_step)
-            self.tb_writer.add_scalar("Eval/loss_aux_p", losses_aux_p.avg, self.eval_step)
+            self.tb_writer.add_scalar("Eval/loss_aux", losses_aux.avg, self.eval_step)
             self.tb_writer.add_scalars("Eval/metrics", {m.__name__.lower(): m.val for m in metrics}, self.eval_step)
             self.tb_writer.flush()
 

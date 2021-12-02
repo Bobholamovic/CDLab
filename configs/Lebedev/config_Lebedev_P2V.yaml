@@ -25,4 +25,4 @@ schedulers:
 p2v_model:
   in_ch: 3
   video_len: 8
-lambda: 0.1
+lambda: 0.5
