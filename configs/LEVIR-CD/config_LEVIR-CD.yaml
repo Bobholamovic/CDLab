@@ -38,10 +38,10 @@ exp_dir: ../exp/
 debug_on: False
 inherit_off: False
 log_off: False
-track_intvl: 5
+track_intvl: 10
 tb_on: False
-tb_intvl: 1000
-suffix_off: False
+tb_intvl: 500
+suffix_off: True
 save_on: False
 out_dir: ''
 

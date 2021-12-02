@@ -57,6 +57,42 @@ def build_P2V_model(C):
     return P2VNet(**C['p2v_model'])
 
 
+@MODELS.register_func('P2V_2donly_model')
+def build_P2V_2donly_model(C):
+    from models.p2v import P2VNet_2DOnly
+    return P2VNet_2DOnly(**C['p2v_model'])
+
+
+@MODELS.register_func('P2V_notemporal_model')
+def build_P2V_notemporal_model(C):
+    from models.p2v import P2VNet_NoTemporal
+    return P2VNet_NoTemporal(**C['p2v_model'])
+
+
+@MODELS.register_func('P2V_latefusion_model')
+def build_P2V_latefusion_model(C):
+    from models.p2v import P2VNet_LateFusion
+    return P2VNet_LateFusion(**C['p2v_model'])
+
+
+@MODELS.register_func('P2V_halfhalf_model')
+def build_P2V_halfhalf_model(C):
+    from models.p2v import P2VNet_Halfhalf
+    return P2VNet_Halfhalf(**C['p2v_model'])
+
+
+@MODELS.register_func('P2V_alter_model')
+def build_P2V_alter_model(C):
+    from models.p2v import P2VNet_Alter
+    return P2VNet_Alter(**C['p2v_model'])
+
+
+@MODELS.register_func('P2V_perm_model')
+def build_P2V_perm_model(C):
+    from models.p2v import P2VNet_Perm
+    return P2VNet_Perm(**C['p2v_model'])
+
+
 @MODELS.register_func('CiDL_Dis_model')
 def build_CiDL_Dis_model(C):
     from models.drit import Dis, gaussian_weights_init

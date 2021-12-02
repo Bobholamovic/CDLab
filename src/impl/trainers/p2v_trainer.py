@@ -16,7 +16,6 @@ from utils.metrics import (Meter, Precision, Recall, Accuracy, F1Score)
 
 class P2VTrainer(CDTrainer):
     def __init__(self, settings):
-        assert settings['model'] == 'P2V'
         super().__init__(settings['model'], settings['dataset'], settings['criterion'], settings['optimizer'], settings)
         self.thresh = settings['threshold']
         self.lambda_ = settings['lambda']
