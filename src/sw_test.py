@@ -33,7 +33,7 @@ class WindowGenerator:
 
     def __next__(self):
         # Column-first movement
-        if self._i > self.h-self.ch:
+        if self._i > self.h:
             raise StopIteration
         
         bottom = min(self._i+self.ch, self.h)
@@ -41,15 +41,24 @@ class WindowGenerator:
         top = max(0, bottom-self.ch)
         left = max(0, right-self.cw)
 
-        self._j += self.sj
-        if self._j > self.w-self.cw:
-            self._i += self.si
-            self._j = 0
-        
+        if self._j >= self.w-self.cw:
+            if self._i >= self.h-self.ch:
+                # Set an illegal value to enable early stopping
+                self._i = self.h+1
+            self._goto_next_row()
+        else:
+            self._j += self.sj
+            if self._j > self.w:
+                self._goto_next_row()
+
         return slice(top, bottom, 1), slice(left, right, 1)
 
     def __iter__(self):
         return self
+
+    def _goto_next_row(self):
+        self._i += self.si
+        self._j = 0
 
 
 class Preprocessor:
@@ -87,6 +96,7 @@ def sw_infer(t1, t2, model, window_size, stride, prep, postp):
             prob_map[rows,cols] += prob
             cnt[rows,cols] += 1
         prob_map /= cnt
+        breakpoint()
     return prob_map
 
 
@@ -121,7 +131,7 @@ def main():
         parser.add_argument('--thresh', type=float, default=0.5)
 
         return parser
-        
+    
     args = parse_args(parser_configurator)
     
     logger = R['Logger']
@@ -131,7 +141,7 @@ def main():
     postp = PostProcessor()
 
     prec, rec, f1, acc = Precision(mode='accum'), Recall(mode='accum'), F1Score(mode='accum'), Accuracy(mode='accum')
-
+    
     try:
         for i, path in enumerate(iglob(osp.join(args['gt_dir'], args['glob']))):
             basename = osp.basename(path)
