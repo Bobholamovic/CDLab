@@ -28,6 +28,7 @@ if __name__ == '__main__':
                 out_subdir = join(out_dir, subset, subdir, name)
                 if not exists(out_subdir):
                     makedirs(out_subdir)
-                for i in range(0, h-CROP_SIZE+1, STRIDE):
-                    for j in range(0, w-CROP_SIZE+1, STRIDE):
+                stride = STRIDE if subset == 'train' else STRIDE*2
+                for i in range(0, h-CROP_SIZE+1, stride):
+                    for j in range(0, w-CROP_SIZE+1, stride):
                         imsave(join(out_subdir, '{}_{}{}'.format(name,next(counter),ext)), img[i:i+CROP_SIZE, j:j+CROP_SIZE])

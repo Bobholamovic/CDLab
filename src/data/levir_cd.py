@@ -25,6 +25,7 @@ class LEVIRCDDataset(CDDataset):
         t1_list = sorted(glob(join(self.root, self.subset, 'A', '**', '*.png'), recursive=True))
         t2_list = sorted(glob(join(self.root, self.subset, 'B', '**', '*.png'), recursive=True))
         tar_list = sorted(glob(join(self.root, self.subset, 'label', '**', '*.png'), recursive=True))
+        assert len(t1_list) == len(t2_list) == len(tar_list)
         return t1_list, t2_list, tar_list
 
     def fetch_target(self, target_path):

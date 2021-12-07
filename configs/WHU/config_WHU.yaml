@@ -1,17 +1,17 @@
-# Basic configurations on LEVIR-CD dataset
+# Basic configurations on WHU dataset
 
 
 # Data
-dataset: LEVIR-CD
+dataset: WHU
 num_workers: 2
-repeats: 2
+repeats: 4
 subset: val
 crop_size: 256
 
 
 # Optimizer
 optimizer: Adam
-lr: 0.002
+lr: 0.0004
 weight_decay: 0.0
 load_optim: False
 save_optim: False

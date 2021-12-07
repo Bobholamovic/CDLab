@@ -9,6 +9,7 @@ import skimage.transform
 
 __all__ = [
     'Compose', 'Choose', 
+    'Identity',
     'Scale', 'DiscreteScale', 
     'FlipRotate', 'Flip', 'HorizontalFlip', 'VerticalFlip', 'Rotate', 
     'Crop',
@@ -90,6 +91,11 @@ class Choose:
 
     def __repr__(self):
         return "Choose [ "+", ".join(tf.__repr__() for tf in self.tfs)+"]\n"
+
+
+class Identity:
+    def __call__(self, *x):
+        return x if len(x)>0 else x[0]
 
 
 class Scale(Transform):

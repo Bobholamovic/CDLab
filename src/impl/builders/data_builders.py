@@ -152,11 +152,6 @@ def build_OSCD_eval_dataset(C):
         pin_memory=False,
         drop_last=False
     )
-
-
-class _Identity:
-    def __call__(self, *args):
-        return args if len(args)>0 else args[0]
         
 
 @DATA.register_func('Lebedev_train_dataset')
@@ -167,7 +162,7 @@ def build_Lebedev_train_dataset(C):
             HorizontalFlip(), VerticalFlip(), 
             Rotate('90'), Rotate('180'), Rotate('270'),
             Shift(), 
-            _Identity()),
+            Identity()),
         ), Normalize(0.0, 255.0), None),
         root=constants.IMDB_LEBEDEV,
         sets=('real',)
@@ -200,7 +195,7 @@ def build_Lebedev_P2V_train_dataset(C):
             HorizontalFlip(), VerticalFlip(), 
             Rotate('90'), Rotate('180'), Rotate('270'),
             Shift(), 
-            _Identity()), 
+            Identity()), 
             Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
         root=constants.IMDB_LEBEDEV,
         sets=('real',)
@@ -257,7 +252,7 @@ def build_Lebedev_DnD_train_dataset(C):
             HorizontalFlip(), VerticalFlip(), 
             Rotate('90'), Rotate('180'), Rotate('270'),
             Shift(), 
-            _Identity()),
+            Identity()),
             Resize((224,224)),
         ), Normalize(mu=np.array([123.675, 116.28, 103.53]), sigma=np.array([58.395, 57.12, 57.375])), None),
         root=constants.IMDB_LEBEDEV,
@@ -291,7 +286,7 @@ def build_LEVIR_CD_train_dataset(C):
             HorizontalFlip(), VerticalFlip(), 
             Rotate('90'), Rotate('180'), Rotate('270'),
             Shift(), 
-            _Identity()), Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
+            Identity()), Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
         root=constants.IMDB_LEVIR_CD,
     ))
 
@@ -309,3 +304,31 @@ def build_LEVIR_CD_eval_dataset(C):
 
     from data.levir_cd import LEVIRCDDataset
     return build_eval_dataloader(LEVIRCDDataset, configs)
+
+
+@DATA.register_func('WHU_train_dataset')
+def build_WHU_train_dataset(C):
+    configs = get_common_train_configs(C)
+    configs.update(dict(
+        transforms=(Choose(
+            HorizontalFlip(), VerticalFlip(), 
+            Rotate('90'), Rotate('180'), Rotate('270'),
+            Shift(), 
+            Identity()), Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
+        root=constants.IMDB_WHU,
+    ))
+
+    from data.whu import WHUDataset
+    return build_train_dataloader(WHUDataset, configs, C)
+
+
+@DATA.register_func('WHU_eval_dataset')
+def build_WHU_eval_dataset(C):
+    configs = get_common_eval_configs(C)
+    configs.update(dict(
+        transforms=(None, Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
+        root=constants.IMDB_WHU,
+    ))
+
+    from data.whu import WHUDataset
+    return build_eval_dataloader(WHUDataset, configs)

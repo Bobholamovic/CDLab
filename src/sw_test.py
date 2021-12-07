@@ -96,7 +96,6 @@ def sw_infer(t1, t2, model, window_size, stride, prep, postp):
             prob_map[rows,cols] += prob
             cnt[rows,cols] += 1
         prob_map /= cnt
-        breakpoint()
     return prob_map
 
 
