@@ -1,0 +1,11 @@
+# SYSU-CD+P2V
+
+out_dir: P2V
+criterion: WBCE
+model: P2V
+
+p2v_model:
+  in_ch: 3
+  video_len: 8
+lambda: 0.5
+threshold: 0.5

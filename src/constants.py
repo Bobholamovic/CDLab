@@ -6,6 +6,7 @@ IMDB_AIRCHANGE = "~/data/SZTAKI_AirChange_Benchmark/"
 IMDB_LEBEDEV = "~/data/HR/ChangeDetectionDataset/"
 IMDB_LEVIR_CD = "~/data/LEVIR-CD/256x256_2/"
 IMDB_WHU = "~/data/WHU/256x256/"
+IMDB_SYSU_CD = "/home/gdf/data/SYSU-CD/"
 
 # Template strings
 CKP_LATEST = "checkpoint_latest.pth"
