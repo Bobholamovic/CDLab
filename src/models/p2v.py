@@ -373,3 +373,50 @@ class P2VNet_Alter(P2VNet):
 class P2VNet_Perm(P2VNet):
     def pair_to_video(self, im1, im2, rate_map=None):
         return torch.stack([im2,im1,im1,im1,im2,im1,im2,im2], dim=1)
+
+
+# decouple
+class VideoEncoder_1DOnly(nn.Module):
+    def __init__(self, in_ch, enc_chs=(64,128)):
+        super().__init__()
+        if in_ch != 3:
+            raise NotImplementedError
+
+        self.num_layers = 2
+        self.expansion = 4
+
+        self.stem = nn.Sequential(
+            nn.Conv3d(3, enc_chs[0], kernel_size=(3,1,1), stride=(1,4,4), padding=(1,0,0), bias=False),
+            nn.BatchNorm3d(enc_chs[0]),
+            nn.ReLU(True)
+        )
+        exps = self.expansion
+        self.layer1 = nn.Sequential(
+            ResBlock3D(enc_chs[0], enc_chs[0]*exps, enc_chs[0], ds=BasicConv3D(enc_chs[0], enc_chs[0]*exps, 1, bn=True)),
+            ResBlock3D(enc_chs[0]*exps, enc_chs[0]*exps, enc_chs[0])
+        )
+        self.layer1[0].conv2.seq[0] = nn.Conv3d(enc_chs[0], enc_chs[0], (3,1,1), padding=(1,0,0))
+        self.layer1[1].conv2.seq[0] = nn.Conv3d(enc_chs[0], enc_chs[0], (3,1,1), padding=(1,0,0))
+        self.layer2 = nn.Sequential(
+            ResBlock3D(enc_chs[0]*exps, enc_chs[1]*exps, enc_chs[1], stride=(2,2,2), ds=BasicConv3D(enc_chs[0]*exps, enc_chs[1]*exps, 1, stride=(2,2,2), bn=True)),
+            ResBlock3D(enc_chs[1]*exps, enc_chs[1]*exps, enc_chs[1])
+        )
+        self.layer2[0].conv2.seq[0] = nn.Conv3d(enc_chs[1], enc_chs[1], (3,1,1), padding=(1,0,0))
+        self.layer2[1].conv2.seq[0] = nn.Conv3d(enc_chs[1], enc_chs[1], (3,1,1), padding=(1,0,0))
+
+    def forward(self, x):
+        feats = [x]
+
+        x = self.stem(x)
+        for i in range(self.num_layers):
+            layer = getattr(self, f'layer{i+1}')
+            x = layer(x)
+            feats.append(x)
+
+        return feats
+        
+
+class P2VNet_Decouple(P2VNet):
+    def __init__(self, in_ch, video_len=8, enc_chs_p=(32,64,128), enc_chs_v=(64,180), dec_chs=(256,128,64,32)):
+        super().__init__(in_ch, video_len, enc_chs_p, enc_chs_v, dec_chs)
+        self.encoder_v = VideoEncoder_1DOnly(in_ch, enc_chs=enc_chs_v)

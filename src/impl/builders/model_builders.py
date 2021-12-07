@@ -93,6 +93,12 @@ def build_P2V_perm_model(C):
     return P2VNet_Perm(**C['p2v_model'])
 
 
+@MODELS.register_func('P2V_decouple_model')
+def build_P2V_decouple_model(C):
+    from models.p2v import P2VNet_Decouple
+    return P2VNet_Decouple(**C['p2v_model'])
+
+
 @MODELS.register_func('CiDL_Dis_model')
 def build_CiDL_Dis_model(C):
     from models.drit import Dis, gaussian_weights_init
