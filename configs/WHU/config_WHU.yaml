@@ -4,7 +4,7 @@
 # Data
 dataset: WHU
 num_workers: 2
-repeats: 4
+repeats: 7
 subset: val
 crop_size: 256
 
@@ -18,13 +18,13 @@ save_optim: False
 sched_on: True
 schedulers:
   - name: StepLR
-    step_size: 30
+    step_size: 10
     gamma: 0.2
 
 
 # Training related
 batch_size: 8
-num_epochs: 40
+num_epochs: 30
 resume: ''
 anew: False
 device: cuda
