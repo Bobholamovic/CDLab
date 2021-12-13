@@ -1,0 +1,4 @@
+# SVCD+P2V-2DOnly
+
+out_dir: p2v-2donly
+model: P2V-2DOnly

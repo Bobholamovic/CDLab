@@ -29,6 +29,7 @@ class CDTrainer_NLL(CDTrainer):
             show_imgs_on_tb = self.tb_on and (i%self.tb_intvl == 0)
             
             pred = self.model(t1, t2)
+            pred = torch.nn.functional.log_softmax(pred)
             
             loss = self.criterion(pred, tar)
             
@@ -74,6 +75,7 @@ class CDTrainer_NLL(CDTrainer):
                 t1, t2, tar = t1.to(self.device), t2.to(self.device), tar.to(self.device)
                 
                 pred = self.model(t1, t2)
+                pred = torch.nn.functional.log_softmax(pred)
 
                 loss = self.criterion(pred, tar)
                 losses.update(loss.item())

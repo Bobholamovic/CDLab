@@ -1,88 +1,161 @@
-# Implementation of
+# Adapted from https://github.com/rcdaudt/fully_convolutional_change_detection/blob/master/siamunet_conc.py
+
+## Original head information
+# Rodrigo Caye Daudt
+# https://rcdaudt.github.io/
 # Daudt, R. C., Le Saux, B., & Boulch, A. "Fully convolutional siamese networks for change detection". In 2018 25th IEEE International Conference on Image Processing (ICIP) (pp. 4063-4067). IEEE.
-# with modifications (remove dropout layers, add residual connections, double number of channels, and change decoding blocks).
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.modules.padding import ReplicationPad2d
 
-from ._blocks import Conv3x3, MaxPool2x2, ResBlock, ResBlock2, DecBlock
 
+class SiamUnet_conc(nn.Module):
+    """SiamUnet_conc segmentation network."""
 
-class SiamUNet_conc(nn.Module):
-    def __init__(self, in_ch, out_ch):
-        super().__init__()
+    def __init__(self, input_nbr, label_nbr):
+        super(SiamUnet_conc, self).__init__()
 
-        C = [32, 64, 128, 256]
+        self.input_nbr = input_nbr
 
-        self.conv1 = ResBlock(in_ch, C[0])
-        self.pool1 = MaxPool2x2()
+        self.conv11 = nn.Conv2d(input_nbr, 16, kernel_size=3, padding=1)
+        self.bn11 = nn.BatchNorm2d(16)
+        self.conv12 = nn.Conv2d(16, 16, kernel_size=3, padding=1)
+        self.bn12 = nn.BatchNorm2d(16)
 
-        self.conv2 = ResBlock(C[0], C[1])
-        self.pool2 = MaxPool2x2()
+        self.conv21 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
+        self.bn21 = nn.BatchNorm2d(32)
+        self.conv22 = nn.Conv2d(32, 32, kernel_size=3, padding=1)
+        self.bn22 = nn.BatchNorm2d(32)
 
-        self.conv3 = ResBlock2(C[1], C[2])
-        self.pool3 = MaxPool2x2()
+        self.conv31 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.bn31 = nn.BatchNorm2d(64)
+        self.conv32 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+        self.bn32 = nn.BatchNorm2d(64)
+        self.conv33 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+        self.bn33 = nn.BatchNorm2d(64)
 
-        self.conv4 = ResBlock2(C[2], C[3])
-        self.pool4 = MaxPool2x2()
+        self.conv41 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        self.bn41 = nn.BatchNorm2d(128)
+        self.conv42 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
+        self.bn42 = nn.BatchNorm2d(128)
+        self.conv43 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
+        self.bn43 = nn.BatchNorm2d(128)
 
-        self.conv4d = DecBlock(C[3]+C[3], C[3], C[2])
+        self.upconv4 = nn.ConvTranspose2d(128, 128, kernel_size=3, padding=1, stride=2, output_padding=1)
 
-        self.conv3d = DecBlock(C[2]+C[2], C[2], C[1])
+        self.conv43d = nn.ConvTranspose2d(384, 128, kernel_size=3, padding=1)
+        self.bn43d = nn.BatchNorm2d(128)
+        self.conv42d = nn.ConvTranspose2d(128, 128, kernel_size=3, padding=1)
+        self.bn42d = nn.BatchNorm2d(128)
+        self.conv41d = nn.ConvTranspose2d(128, 64, kernel_size=3, padding=1)
+        self.bn41d = nn.BatchNorm2d(64)
 
-        self.conv2d = DecBlock(C[1]+C[1], C[1], C[0])
+        self.upconv3 = nn.ConvTranspose2d(64, 64, kernel_size=3, padding=1, stride=2, output_padding=1)
 
-        self.conv1d = DecBlock(C[0]+C[0], C[0], out_ch, bn=False, act=False)
+        self.conv33d = nn.ConvTranspose2d(192, 64, kernel_size=3, padding=1)
+        self.bn33d = nn.BatchNorm2d(64)
+        self.conv32d = nn.ConvTranspose2d(64, 64, kernel_size=3, padding=1)
+        self.bn32d = nn.BatchNorm2d(64)
+        self.conv31d = nn.ConvTranspose2d(64, 32, kernel_size=3, padding=1)
+        self.bn31d = nn.BatchNorm2d(32)
 
-        self.act_out = nn.LogSoftmax(dim=1)
+        self.upconv2 = nn.ConvTranspose2d(32, 32, kernel_size=3, padding=1, stride=2, output_padding=1)
 
-    def forward(self, t1, t2):
-        # Encode branch 1
+        self.conv22d = nn.ConvTranspose2d(96, 32, kernel_size=3, padding=1)
+        self.bn22d = nn.BatchNorm2d(32)
+        self.conv21d = nn.ConvTranspose2d(32, 16, kernel_size=3, padding=1)
+        self.bn21d = nn.BatchNorm2d(16)
+
+        self.upconv1 = nn.ConvTranspose2d(16, 16, kernel_size=3, padding=1, stride=2, output_padding=1)
+
+        self.conv12d = nn.ConvTranspose2d(48, 16, kernel_size=3, padding=1)
+        self.bn12d = nn.BatchNorm2d(16)
+        self.conv11d = nn.ConvTranspose2d(16, label_nbr, kernel_size=3, padding=1)
+
+    def forward(self, x1, x2):
+
+        """Forward method."""
         # Stage 1
-        x11 = self.conv1(t1)
-        xp = self.pool1(x11)
+        x11 = F.relu(self.bn11(self.conv11(x1)))
+        x12_1 = F.relu(self.bn12(self.conv12(x11)))
+        x1p = F.max_pool2d(x12_1, kernel_size=2, stride=2)
+
 
         # Stage 2
-        x21 = self.conv2(xp)
-        xp = self.pool2(x21)
+        x21 = F.relu(self.bn21(self.conv21(x1p)))
+        x22_1 = F.relu(self.bn22(self.conv22(x21)))
+        x2p = F.max_pool2d(x22_1, kernel_size=2, stride=2)
 
         # Stage 3
-        x31 = self.conv3(xp)
-        xp = self.pool3(x31)
+        x31 = F.relu(self.bn31(self.conv31(x2p)))
+        x32 = F.relu(self.bn32(self.conv32(x31)))
+        x33_1 = F.relu(self.bn33(self.conv33(x32)))
+        x3p = F.max_pool2d(x33_1, kernel_size=2, stride=2)
 
         # Stage 4
-        x41 = self.conv4(xp)
-        xp1 = self.pool4(x41)
+        x41 = F.relu(self.bn41(self.conv41(x3p)))
+        x42 = F.relu(self.bn42(self.conv42(x41)))
+        x43_1 = F.relu(self.bn43(self.conv43(x42)))
+        x4p = F.max_pool2d(x43_1, kernel_size=2, stride=2)
 
-        # Encode branch 2
+
+        ####################################################
         # Stage 1
-        x12 = self.conv1(t2)
-        xp = self.pool1(x12)
+        x11 = F.relu(self.bn11(self.conv11(x2)))
+        x12_2 = F.relu(self.bn12(self.conv12(x11)))
+        x1p = F.max_pool2d(x12_2, kernel_size=2, stride=2)
 
         # Stage 2
-        x22 = self.conv2(xp)
-        xp = self.pool2(x22)
+        x21 = F.relu(self.bn21(self.conv21(x1p)))
+        x22_2 = F.relu(self.bn22(self.conv22(x21)))
+        x2p = F.max_pool2d(x22_2, kernel_size=2, stride=2)
 
         # Stage 3
-        x32 = self.conv3(xp)
-        xp = self.pool3(x32)
+        x31 = F.relu(self.bn31(self.conv31(x2p)))
+        x32 = F.relu(self.bn32(self.conv32(x31)))
+        x33_2 = F.relu(self.bn33(self.conv33(x32)))
+        x3p = F.max_pool2d(x33_2, kernel_size=2, stride=2)
 
         # Stage 4
-        x42 = self.conv4(xp)
-        xp2 = self.pool4(x42)
+        x41 = F.relu(self.bn41(self.conv41(x3p)))
+        x42 = F.relu(self.bn42(self.conv42(x41)))
+        x43_2 = F.relu(self.bn43(self.conv43(x42)))
+        x4p = F.max_pool2d(x43_2, kernel_size=2, stride=2)
 
-        # Decode
+
+        ####################################################
         # Stage 4d
-        xd = self.conv4d(torch.cat((x41,x42), dim=1), xp2)
+        x4d = self.upconv4(x4p)
+        pad4 = ReplicationPad2d((0, x43_1.size(3) - x4d.size(3), 0, x43_1.size(2) - x4d.size(2)))
+        x4d = torch.cat((pad4(x4d), x43_1, x43_2), 1)
+        x43d = F.relu(self.bn43d(self.conv43d(x4d)))
+        x42d = F.relu(self.bn42d(self.conv42d(x43d)))
+        x41d = F.relu(self.bn41d(self.conv41d(x42d)))
 
         # Stage 3d
-        xd = self.conv3d(torch.cat((x31,x32), dim=1), xd)
+        x3d = self.upconv3(x41d)
+        pad3 = ReplicationPad2d((0, x33_1.size(3) - x3d.size(3), 0, x33_1.size(2) - x3d.size(2)))
+        x3d = torch.cat((pad3(x3d), x33_1, x33_2), 1)
+        x33d = F.relu(self.bn33d(self.conv33d(x3d)))
+        x32d = F.relu(self.bn32d(self.conv32d(x33d)))
+        x31d = F.relu(self.bn31d(self.conv31d(x32d)))
 
         # Stage 2d
-        xd = self.conv2d(torch.cat((x21,x22), dim=1), xd)
+        x2d = self.upconv2(x31d)
+        pad2 = ReplicationPad2d((0, x22_1.size(3) - x2d.size(3), 0, x22_1.size(2) - x2d.size(2)))
+        x2d = torch.cat((pad2(x2d), x22_1, x22_2), 1)
+        x22d = F.relu(self.bn22d(self.conv22d(x2d)))
+        x21d = F.relu(self.bn21d(self.conv21d(x22d)))
 
         # Stage 1d
-        xd = self.conv1d(torch.cat((x11,x12), dim=1), xd)
+        x1d = self.upconv1(x21d)
+        pad1 = ReplicationPad2d((0, x12_1.size(3) - x1d.size(3), 0, x12_1.size(2) - x1d.size(2)))
+        x1d = torch.cat((pad1(x1d), x12_1, x12_2), 1)
+        x12d = F.relu(self.bn12d(self.conv12d(x1d)))
+        x11d = self.conv11d(x12d)
 
-        return self.act_out(xd)
+        return x11d
+
+    

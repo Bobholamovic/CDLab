@@ -1,0 +1,4 @@
+# Szada+Unet
+
+out_dir: unet
+model: Unet

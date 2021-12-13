@@ -15,8 +15,8 @@ from core.data import (
 )
 
 
-@DATA.register_func('AC_Szada_train_dataset')
-def build_AC_Szada_train_dataset(C):
+@DATA.register_func('AC-Szada_train_dataset')
+def build_ac_szada_train_dataset(C):
     configs = get_common_train_configs(C)
     configs.update(dict(
         transforms=(Compose(
@@ -43,8 +43,8 @@ def build_AC_Szada_train_dataset(C):
     )
 
 
-@DATA.register_func('AC_Szada_eval_dataset')
-def build_AC_Szada_eval_dataset(C):
+@DATA.register_func('AC-Szada_eval_dataset')
+def build_ac_szada_eval_dataset(C):
     configs = get_common_eval_configs(C)
     configs.update(dict(
         transforms=(None, Normalize(0.0, 255.0), None),
@@ -62,8 +62,8 @@ def build_AC_Szada_eval_dataset(C):
     )
 
 
-@DATA.register_func('AC_Tiszadob_train_dataset')
-def build_AC_Tiszadob_train_dataset(C):
+@DATA.register_func('AC-Tiszadob_train_dataset')
+def build_ac_tiszadob_train_dataset(C):
     configs = get_common_train_configs(C)
     configs.update(dict(
         transforms=(Compose(
@@ -90,8 +90,8 @@ def build_AC_Tiszadob_train_dataset(C):
     )
 
 
-@DATA.register_func('AC_Tiszadob_eval_dataset')
-def build_AC_Tiszadob_eval_dataset(C):
+@DATA.register_func('AC-Tiszadob_eval_dataset')
+def build_ac_tiszadob_eval_dataset(C):
     configs = get_common_eval_configs(C)
     configs.update(dict(
         transforms=(None, Normalize(0.0, 255.0), None),
@@ -110,7 +110,7 @@ def build_AC_Tiszadob_eval_dataset(C):
 
 
 @DATA.register_func('OSCD_train_dataset')
-def build_OSCD_train_dataset(C):
+def build_oscd_train_dataset(C):
     configs = get_common_train_configs(C)
     configs.update(dict(
         transforms=(Compose(
@@ -135,7 +135,7 @@ def build_OSCD_train_dataset(C):
 
 
 @DATA.register_func('OSCD_eval_dataset')
-def build_OSCD_eval_dataset(C):
+def build_oscd_eval_dataset(C):
     configs = get_common_eval_configs(C)
     configs.update(dict(
         transforms=(None, Normalize(zscore=True), None),
@@ -154,8 +154,8 @@ def build_OSCD_eval_dataset(C):
     )
         
 
-@DATA.register_func('Lebedev_train_dataset')
-def build_Lebedev_train_dataset(C):
+@DATA.register_func('SVCD_train_dataset')
+def build_svcd_train_dataset(C):
     configs = get_common_train_configs(C)
     configs.update(dict(
         transforms=(Compose(Choose(
@@ -164,31 +164,31 @@ def build_Lebedev_train_dataset(C):
             Shift(), 
             Identity()),
         ), Normalize(0.0, 255.0), None),
-        root=constants.IMDB_LEBEDEV,
+        root=constants.IMDB_SVCD,
         sets=('real',)
     ))
 
-    from data.lebedev import LebedevDataset
-    return build_train_dataloader(LebedevDataset, configs, C)
+    from data.svcd import SVCDDataset
+    return build_train_dataloader(SVCDDataset, configs, C)
 
 
-@DATA.register_func('Lebedev_eval_dataset')
-def build_Lebedev_eval_dataset(C):
+@DATA.register_func('SVCD_eval_dataset')
+def build_svcd_eval_dataset(C):
     configs = get_common_eval_configs(C)
     configs.update(dict(
         transforms=(
         None,    
         Normalize(0.0, 255.0), None),
-        root=constants.IMDB_LEBEDEV,
+        root=constants.IMDB_SVCD,
         sets=('real',)
     ))
 
-    from data.lebedev import LebedevDataset
-    return build_eval_dataloader(LebedevDataset, configs)
+    from data.svcd import SVCDDataset
+    return build_eval_dataloader(SVCDDataset, configs)
 
 
-@DATA.register_func('Lebedev_P2V_train_dataset')
-def build_Lebedev_P2V_train_dataset(C):
+@DATA.register_func('SVCD_P2V_train_dataset')
+def build_svcd_p2v_train_dataset(C):
     configs = get_common_train_configs(C)
     configs.update(dict(
         transforms=(Choose(
@@ -197,89 +197,29 @@ def build_Lebedev_P2V_train_dataset(C):
             Shift(), 
             Identity()), 
             Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
-        root=constants.IMDB_LEBEDEV,
+        root=constants.IMDB_SVCD,
         sets=('real',)
     ))
 
-    from data.lebedev import LebedevDataset
-    return build_train_dataloader(LebedevDataset, configs, C)
+    from data.svcd import SVCDDataset
+    return build_train_dataloader(SVCDDataset, configs, C)
 
 
-@DATA.register_func('Lebedev_P2V_eval_dataset')
-def build_Lebedev_P2V_eval_dataset(C):
+@DATA.register_func('SVCD_P2V_eval_dataset')
+def build_svcd_p2v_eval_dataset(C):
     configs = get_common_eval_configs(C)
     configs.update(dict(
         transforms=(None, Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
-        root=constants.IMDB_LEBEDEV,
+        root=constants.IMDB_SVCD,
         sets=('real',)
     ))
 
-    from data.lebedev import LebedevDataset
-    return build_eval_dataloader(LebedevDataset, configs)
+    from data.svcd import SVCDDataset
+    return build_eval_dataloader(SVCDDataset, configs)
 
 
-@DATA.register_func('Lebedev_CiDL_train_dataset')
-def build_Lebedev_CiDL_train_dataset(C):
-    configs = get_common_train_configs(C)
-    configs.update(dict(
-        transforms=(None, Normalize(127.5, 127.5), None),
-        root=constants.IMDB_LEBEDEV,
-        sets=('real',)
-    ))
-
-    from data.lebedev import LebedevDataset
-    return build_train_dataloader(LebedevDataset, configs, C)
-
-
-@DATA.register_func('Lebedev_CiDL_eval_dataset')
-def build_Lebedev_CiDL_eval_dataset(C):
-    configs = get_common_eval_configs(C)
-    configs.update(dict(
-        transforms=(None, Normalize(127.5, 127.5), None),
-        root=constants.IMDB_LEBEDEV,
-        sets=('real',)
-    ))
-
-    from data.lebedev import LebedevDataset
-    return build_eval_dataloader(LebedevDataset, configs)
-
-
-@DATA.register_func('Lebedev_DnD_train_dataset')
-def build_Lebedev_DnD_train_dataset(C):
-    configs = get_common_train_configs(C)
-    configs.update(dict(
-        transforms=(Compose(Choose(
-            HorizontalFlip(), VerticalFlip(), 
-            Rotate('90'), Rotate('180'), Rotate('270'),
-            Shift(), 
-            Identity()),
-            Resize((224,224)),
-        ), Normalize(mu=np.array([123.675, 116.28, 103.53]), sigma=np.array([58.395, 57.12, 57.375])), None),
-        root=constants.IMDB_LEBEDEV,
-        sets=('real',)
-    ))
-
-    from data.lebedev import LebedevDataset
-    return build_train_dataloader(LebedevDataset, configs, C)
-
-
-@DATA.register_func('Lebedev_DnD_eval_dataset')
-def build_Lebedev_DnD_eval_dataset(C):
-    configs = get_common_eval_configs(C)
-    configs.update(dict(
-        transforms=(Compose(
-            Resize((224,224)),
-        ), Normalize(mu=np.array([123.675, 116.28, 103.53]), sigma=np.array([58.395, 57.12, 57.375])), None),
-        root=constants.IMDB_LEBEDEV,
-        sets=('real',)
-    ))
-
-    from data.lebedev import LebedevDataset
-    return build_eval_dataloader(LebedevDataset, configs)
-
-
-@DATA.register_func('LEVIR-CD_train_dataset')
-def build_LEVIR_CD_train_dataset(C):
+@DATA.register_func('LEVIRCD_P2V_train_dataset')
+def build_levircd_p2v_train_dataset(C):
     configs = get_common_train_configs(C)
     configs.update(dict(
         transforms=(Choose(
@@ -287,27 +227,27 @@ def build_LEVIR_CD_train_dataset(C):
             Rotate('90'), Rotate('180'), Rotate('270'),
             Shift(), 
             Identity()), Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
-        root=constants.IMDB_LEVIR_CD,
+        root=constants.IMDB_LEVIRCD,
     ))
 
-    from data.levir_cd import LEVIRCDDataset
+    from data.levircd import LEVIRCDDataset
     return build_train_dataloader(LEVIRCDDataset, configs, C)
 
 
-@DATA.register_func('LEVIR-CD_eval_dataset')
-def build_LEVIR_CD_eval_dataset(C):
+@DATA.register_func('LEVIRCD_P2V_eval_dataset')
+def build_levircd_p2v_eval_dataset(C):
     configs = get_common_eval_configs(C)
     configs.update(dict(
         transforms=(None, Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
-        root=constants.IMDB_LEVIR_CD,
+        root=constants.IMDB_LEVIRCD,
     ))
 
-    from data.levir_cd import LEVIRCDDataset
+    from data.levircd import LEVIRCDDataset
     return build_eval_dataloader(LEVIRCDDataset, configs)
 
 
-@DATA.register_func('WHU_train_dataset')
-def build_WHU_train_dataset(C):
+@DATA.register_func('WHU_P2V_train_dataset')
+def build_whu_p2v_train_dataset(C):
     configs = get_common_train_configs(C)
     configs.update(dict(
         transforms=(Choose(
@@ -322,8 +262,8 @@ def build_WHU_train_dataset(C):
     return build_train_dataloader(WHUDataset, configs, C)
 
 
-@DATA.register_func('WHU_eval_dataset')
-def build_WHU_eval_dataset(C):
+@DATA.register_func('WHU_P2V_eval_dataset')
+def build_whu_p2v_eval_dataset(C):
     configs = get_common_eval_configs(C)
     configs.update(dict(
         transforms=(None, Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
@@ -334,8 +274,8 @@ def build_WHU_eval_dataset(C):
     return build_eval_dataloader(WHUDataset, configs)
 
 
-@DATA.register_func('SYSU-CD_train_dataset')
-def build_SYSU_CD_train_dataset(C):
+@DATA.register_func('SYSUCD_P2V_train_dataset')
+def build_sysucd_p2v_train_dataset(C):
     configs = get_common_train_configs(C)
     configs.update(dict(
         transforms=(
@@ -349,20 +289,20 @@ def build_SYSU_CD_train_dataset(C):
                 # AddGaussNoise(sigma=5.0, prob_apply=0.2),
                 Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195]))),
             None),
-        root=constants.IMDB_SYSU_CD,
+        root=constants.IMDB_SYSUCD,
     ))
 
-    from data.sysu_cd import SYSUCDDataset
+    from data.sysucd import SYSUCDDataset
     return build_train_dataloader(SYSUCDDataset, configs, C)
 
 
-@DATA.register_func('SYSU-CD_eval_dataset')
-def build_SYSU_CD_eval_dataset(C):
+@DATA.register_func('SYSUCD_P2V_eval_dataset')
+def build_sysucd_p2v_eval_dataset(C):
     configs = get_common_eval_configs(C)
     configs.update(dict(
         transforms=(None, Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
-        root=constants.IMDB_SYSU_CD,
+        root=constants.IMDB_SYSUCD,
     ))
 
-    from data.sysu_cd import SYSUCDDataset
+    from data.sysucd import SYSUCDDataset
     return build_eval_dataloader(SYSUCDDataset, configs)

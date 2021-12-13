@@ -1,0 +1,4 @@
+# SVCD+P2V-NoTemporal
+
+out_dir: p2v-notemporal
+model: P2V-NoTemporal

@@ -1,0 +1,4 @@
+# SVCD+Unet
+
+out_dir: unet
+model: Unet

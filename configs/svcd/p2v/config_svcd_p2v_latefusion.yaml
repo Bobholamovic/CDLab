@@ -1,0 +1,4 @@
+# SVCD+P2V-LateFusion
+
+out_dir: p2v-latefusion
+model: P2V-LateFusion

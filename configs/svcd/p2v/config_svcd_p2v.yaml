@@ -1,0 +1,11 @@
+# SVCD+P2V
+
+out_dir: p2v
+criterion: WBCE
+model: P2V
+
+p2v_model:
+  in_ch: 3
+  video_len: 8
+lambda: 0.4
+threshold: 0.5

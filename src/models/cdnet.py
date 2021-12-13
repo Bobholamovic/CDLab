@@ -37,10 +37,7 @@ class CDNet(nn.Module):
         self.upool2 = MaxUnPool2x2()
         self.conv8 = Conv7x7(64, 64, bn=True, act=True)
         self.upool1 = MaxUnPool2x2()
-        self.conv_out = nn.Sequential(
-            Conv7x7(64, out_ch, bn=False, act=False),
-            nn.LogSoftmax(dim=1)
-        )
+        self.conv_out = Conv7x7(64, out_ch, bn=False, act=False)
     
     def forward(self, t1, t2):
         # Concatenation

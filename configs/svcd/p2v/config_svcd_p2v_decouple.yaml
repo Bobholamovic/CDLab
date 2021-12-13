@@ -1,0 +1,4 @@
+# SVCD+P2V-Decouple
+
+out_dir: p2v-decouple
+model: P2V-Decouple

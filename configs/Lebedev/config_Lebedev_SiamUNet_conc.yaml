@@ -1,5 +1,0 @@
-# Lebedev+SiamUNet_conc
-
-model: SiamUNet_conc
-out_dir: SiamUNet_conc
-suffix_off: True
