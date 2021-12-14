@@ -103,3 +103,9 @@ def build_snunet_model(C):
 def build_lunet_model(C):
     from models.lunet import U_Net
     return U_Net(**C['lunet_model'])
+
+
+@MODELS.register_func('STANet_model')
+def build_stanet_model(C):
+    from models.stanet import create_model
+    return create_model(**C['stanet_model'])
