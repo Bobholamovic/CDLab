@@ -1,0 +1,10 @@
+# SVCD+L-UNet
+
+out_dir: lunet
+model: LUNet
+
+lunet_model:
+  img_ch: 3
+  output_ch: 2
+  patch_size: 256
+  video_len: 2

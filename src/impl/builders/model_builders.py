@@ -91,3 +91,15 @@ def build_p2v_perm_model(C):
 def build_p2v_decouple_model(C):
     from models.p2v import P2VNet_Decouple
     return P2VNet_Decouple(**C['p2v_model'])
+
+
+@MODELS.register_func('SNUNet_model')
+def build_snunet_model(C):
+    from models.snunet import SNUNet_ECAM
+    return SNUNet_ECAM(3, 2)
+
+
+@MODELS.register_func('LUNet_model')
+def build_lunet_model(C):
+    from models.lunet import U_Net
+    return U_Net(**C['lunet_model'])
