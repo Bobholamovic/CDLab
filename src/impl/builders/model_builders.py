@@ -1,5 +1,6 @@
 # Custom model builders
 
+from torchvision.models import vgg
 from core.misc import MODELS
 
 
@@ -109,3 +110,12 @@ def build_lunet_model(C):
 def build_stanet_model(C):
     from models.stanet import create_model
     return create_model(**C['stanet_model'])
+
+
+@MODELS.register_func('IFN_model')
+def build_ifn_model(C):
+    from models.ifn import vgg16_base, DSIFN
+    vgg16_model = vgg16_base()
+    for p in vgg16_model.parameters():
+        p.requires_grad = False
+    return DSIFN(vgg16_model, vgg16_model)

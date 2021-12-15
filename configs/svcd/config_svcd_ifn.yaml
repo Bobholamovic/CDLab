@@ -1,0 +1,13 @@
+# SVCD+DSIFN
+
+lr: 0.0001
+schedulers:
+  - name: ReduceLROnPlateau
+    mode: max
+    factor: 0.1
+    patience: 5
+out_dir: ifn
+criterion: WBCE
+model: IFN
+
+threshold: 0.5
