@@ -74,12 +74,16 @@ class Preprocessor:
 
 
 class PostProcessor:
-    def __init__(self):
-        pass
+    def __init__(self, out_ch):
+        self.out_ch = out_ch
 
     def __call__(self, pred):
-        prob = torch.sigmoid(pred)
-        return to_array(prob[0,0])
+        if self.out_ch == 1:
+            return to_array(torch.sigmoid(pred)[0,0])
+        elif self.out_ch == 2:
+            return to_array(torch.softmax(pred, dim=1)[0,1])
+        else:
+            raise ValueError
 
 
 def sw_infer(t1, t2, model, window_size, stride, prep, postp):
@@ -128,6 +132,7 @@ def main():
         parser.add_argument('--sigma', type=float, nargs='+')
         parser.add_argument('--glob', type=str, default='*.png')
         parser.add_argument('--thresh', type=float, default=0.5)
+        parser.add_argument('--out_ch', type=int, default=1)
 
         return parser
     
@@ -137,7 +142,7 @@ def main():
     model = prepare_model(args)
 
     prep = Preprocessor(args['mu'], args['sigma'], args['device'])
-    postp = PostProcessor()
+    postp = PostProcessor(args['out_ch'])
 
     prec, rec, f1, acc = Precision(mode='accum'), Recall(mode='accum'), F1Score(mode='accum'), Accuracy(mode='accum')
     
