@@ -218,6 +218,34 @@ def build_svcd_p2v_eval_dataset(C):
     return build_eval_dataloader(SVCDDataset, configs)
 
 
+@DATA.register_func('LEVIRCD_train_dataset')
+def build_levircd_train_dataset(C):
+    configs = get_common_train_configs(C)
+    configs.update(dict(
+        transforms=(Choose(
+            HorizontalFlip(), VerticalFlip(), 
+            Rotate('90'), Rotate('180'), Rotate('270'),
+            Shift(), 
+            Identity()), Normalize(0.0, 255.0), None),
+        root=constants.IMDB_LEVIRCD,
+    ))
+
+    from data.levircd import LEVIRCDDataset
+    return build_train_dataloader(LEVIRCDDataset, configs, C)
+
+
+@DATA.register_func('LEVIRCD_eval_dataset')
+def build_levircd_eval_dataset(C):
+    configs = get_common_eval_configs(C)
+    configs.update(dict(
+        transforms=(None, Normalize(0.0, 255.0), None),
+        root=constants.IMDB_LEVIRCD,
+    ))
+
+    from data.levircd import LEVIRCDDataset
+    return build_eval_dataloader(LEVIRCDDataset, configs)
+
+
 @DATA.register_func('LEVIRCD_P2V_train_dataset')
 def build_levircd_p2v_train_dataset(C):
     configs = get_common_train_configs(C)
@@ -244,6 +272,34 @@ def build_levircd_p2v_eval_dataset(C):
 
     from data.levircd import LEVIRCDDataset
     return build_eval_dataloader(LEVIRCDDataset, configs)
+
+
+@DATA.register_func('WHU_train_dataset')
+def build_whu_train_dataset(C):
+    configs = get_common_train_configs(C)
+    configs.update(dict(
+        transforms=(Choose(
+            HorizontalFlip(), VerticalFlip(), 
+            Rotate('90'), Rotate('180'), Rotate('270'),
+            Shift(), 
+            Identity()), Normalize(0.0, 255.0), None),
+        root=constants.IMDB_WHU,
+    ))
+
+    from data.whu import WHUDataset
+    return build_train_dataloader(WHUDataset, configs, C)
+
+
+@DATA.register_func('WHU_eval_dataset')
+def build_whu_eval_dataset(C):
+    configs = get_common_eval_configs(C)
+    configs.update(dict(
+        transforms=(None, Normalize(0.0, 255.0), None),
+        root=constants.IMDB_WHU,
+    ))
+
+    from data.whu import WHUDataset
+    return build_eval_dataloader(WHUDataset, configs)
 
 
 @DATA.register_func('WHU_P2V_train_dataset')

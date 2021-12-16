@@ -119,3 +119,9 @@ def build_ifn_model(C):
     for p in vgg16_model.parameters():
         p.requires_grad = False
     return DSIFN(vgg16_model, vgg16_model)
+
+
+@MODELS.register_func('BIT_model')
+def build_bit_model(C):
+    from models.bit import define_G
+    return define_G(C['bit_arch'])
