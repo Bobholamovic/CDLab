@@ -1,0 +1,26 @@
+# LEVIR-CD+STANet
+
+repeats: 1
+optimizer: Adam
+lr: 0.001
+schedulers:
+  - name: MultiStepLR
+    milestones:
+      - 100
+      - 140
+      - 180
+    gamma: 0.5
+num_epochs: 200
+track_intvl: 40
+out_dir: stanet
+criterion: WBCE
+model: STANet
+
+stanet_model:
+  in_c: 3
+  f_c: 64
+  out_c: 1
+  arch: mynet3
+  ds: 1
+  SA_mode: PAM
+threshold: 0.5

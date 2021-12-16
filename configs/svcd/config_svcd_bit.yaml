@@ -1,0 +1,6 @@
+# SVCD+BIT
+
+out_dir: bit
+model: BIT
+
+bit_arch: base_transformer_pos_s4_dd8_dedim8

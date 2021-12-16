@@ -1,13 +1,4 @@
 # SVCD+SNUNet
 
-num_workers: 4
-repeats: 1
-lr: 0.001
-schedulers:
-  - name: StepLR
-    step_size: 8
-    gamma: 0.5
-batch_size: 16
-num_epochs: 100
 out_dir: snunet
 model: SNUNet
