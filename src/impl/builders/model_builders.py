@@ -97,7 +97,7 @@ def build_p2v_decouple_model(C):
 @MODELS.register_func('SNUNet_model')
 def build_snunet_model(C):
     from models.snunet import SNUNet_ECAM
-    return SNUNet_ECAM(3, 2)
+    return SNUNet_ECAM(3, 2, use_kaiming_init=False)
 
 
 @MODELS.register_func('LUNet_model')

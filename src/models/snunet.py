@@ -64,7 +64,7 @@ class ChannelAttention(nn.Module):
 
 class SNUNet_ECAM(nn.Module):
     # SNUNet-CD with ECAM
-    def __init__(self, in_ch=3, out_ch=2):
+    def __init__(self, in_ch=3, out_ch=2, use_kaiming_init=True):
         super(SNUNet_ECAM, self).__init__()
         torch.nn.Module.dump_patches = True
         n1 = 32     # the initial number of channels of feature map
@@ -107,12 +107,13 @@ class SNUNet_ECAM(nn.Module):
 
         self.conv_final = nn.Conv2d(filters[0] * 4, out_ch, kernel_size=1)
 
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
+        if use_kaiming_init:
+            for m in self.modules():
+                if isinstance(m, nn.Conv2d):
+                    nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                    nn.init.constant_(m.weight, 1)
+                    nn.init.constant_(m.bias, 0)
 
     def forward(self, xA, xB):
         '''xA'''
@@ -154,7 +155,7 @@ class SNUNet_ECAM(nn.Module):
 
 class Siam_NestedUNet_Conc(nn.Module):
     # SNUNet-CD without Attention
-    def __init__(self, in_ch=3, out_ch=2):
+    def __init__(self, in_ch=3, out_ch=2, use_kaiming_init=True):
         super(Siam_NestedUNet_Conc, self).__init__()
         torch.nn.Module.dump_patches = True
         n1 = 32     # the initial number of channels of feature map
@@ -198,12 +199,13 @@ class Siam_NestedUNet_Conc(nn.Module):
         self.final4 = nn.Conv2d(filters[0], out_ch, kernel_size=1)
         self.conv_final = nn.Conv2d(out_ch * 4, out_ch, kernel_size=1)
 
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
+        if use_kaiming_init:
+            for m in self.modules():
+                if isinstance(m, nn.Conv2d):
+                    nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                    nn.init.constant_(m.weight, 1)
+                    nn.init.constant_(m.bias, 0)
 
     def forward(self, xA, xB):
         '''xA'''
