@@ -1,0 +1,4 @@
+# WHU+SiamUnet-conc
+
+out_dir: siamunet-conc
+model: SiamUnet-conc

@@ -1,0 +1,7 @@
+# WHU+DSIFN
+
+out_dir: ifn
+criterion: WBCE
+model: IFN
+
+threshold: 0.5
