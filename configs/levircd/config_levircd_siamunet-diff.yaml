@@ -1,0 +1,4 @@
+# LEVIR-CD+SiamUnet-diff
+
+out_dir: siamunet-diff
+model: SiamUnet-diff

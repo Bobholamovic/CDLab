@@ -1,0 +1,15 @@
+# WHU+BIT
+
+repeats: 1
+optimizer: SGD
+lr: 0.01
+weight_decay: 0.0005
+schedulers:
+  - name: ExponentialLR
+    gamma: 0.975
+num_epochs: 200
+track_intvl: 40
+out_dir: bit
+model: BIT
+
+bit_arch: base_transformer_pos_s4_dd8_dedim8

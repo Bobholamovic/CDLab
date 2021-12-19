@@ -1,0 +1,14 @@
+# WHU+STANet
+
+out_dir: stanet
+criterion: WBCE
+model: STANet
+
+stanet_model:
+  in_c: 3
+  f_c: 64
+  out_c: 1
+  arch: mynet3
+  ds: 1
+  SA_mode: PAM
+threshold: 0.5

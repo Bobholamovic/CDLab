@@ -1,0 +1,12 @@
+# LEVIR-CD+L-UNet
+
+out_dir: lunet
+criterion: WBCE
+model: LUNet
+
+lunet_model:
+  img_ch: 3
+  output_ch: 1
+  patch_size: 256
+  video_len: 2
+threshold: 0.5

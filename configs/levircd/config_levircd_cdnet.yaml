@@ -1,0 +1,4 @@
+# LEVIR-CD+CDNet
+
+out_dir: cdnet
+model: CDNet
