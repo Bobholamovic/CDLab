@@ -74,10 +74,13 @@ class Preprocessor:
 
 
 class PostProcessor:
-    def __init__(self, out_ch):
+    def __init__(self, out_ch, out_idx=0):
         self.out_ch = out_ch
+        self.out_idx = out_idx
 
     def __call__(self, pred):
+        if isinstance(pred, (tuple, list)):
+            pred = pred[self.out_idx]
         if self.out_ch == 1:
             return to_array(torch.sigmoid(pred)[0,0])
         elif self.out_ch == 2:
