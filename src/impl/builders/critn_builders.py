@@ -23,3 +23,9 @@ def build_weighted_bce_critn(C):
 def build_crossentropy_critn(C):
     from utils.losses import CCLoss
     return CCLoss()
+
+
+@CRITNS.register_func('Cmpct_critn')
+def build_compactness_critn(C):
+    from utils.losses import CompactnessLoss
+    return CompactnessLoss()

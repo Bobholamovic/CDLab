@@ -5,10 +5,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data as data
 import numpy as np
+from skimage.color import rgb2lab
 
 import constants
 from utils.data_utils.augmentations import *
 from utils.data_utils.preprocessors import *
+from utils.data_utils.preprocessors import Preprocess
 from core.misc import DATA, R
 from core.data import (
     build_train_dataloader, build_eval_dataloader, get_common_train_configs, get_common_eval_configs
@@ -218,6 +220,55 @@ def build_svcd_p2v_eval_dataset(C):
     return build_eval_dataloader(SVCDDataset, configs)
 
 
+class _RGB2RGBXYLAB(Preprocess):
+    @staticmethod
+    def _get_xy(feats):
+        # Get position features
+        h, w, _ = feats.shape
+        x = np.tile(np.arange(w), (h, 1))
+        y = np.tile(np.arange(h), (w, 1)).T
+        return x, y
+
+    def _process(self, rgb):
+        lab = rgb2lab(rgb)
+        x, y = self._get_xy(lab)
+        rgbxylab = np.concatenate([rgb, x[...,np.newaxis], y[...,np.newaxis], lab], axis=-1)
+        return rgbxylab.astype(np.float32)
+
+
+@DATA.register_func('SVCD_ESCNet_train_dataset')
+def build_svcd_escnet_train_dataset(C):
+    configs = get_common_train_configs(C)
+    configs.update(dict(
+        transforms=(Compose(Choose(
+            HorizontalFlip(), VerticalFlip(), 
+            Rotate('90'), Rotate('180'), Rotate('270'),
+            Shift(), 
+            Identity()),
+        ), _RGB2RGBXYLAB(), None),
+        root=constants.IMDB_SVCD,
+        sets=('real',)
+    ))
+
+    from data.svcd import SVCDDataset
+    return build_train_dataloader(SVCDDataset, configs, C)
+
+
+@DATA.register_func('SVCD_ESCNet_eval_dataset')
+def build_svcd_escnet_eval_dataset(C):
+    configs = get_common_eval_configs(C)
+    configs.update(dict(
+        transforms=(
+        None,    
+        _RGB2RGBXYLAB(), None),
+        root=constants.IMDB_SVCD,
+        sets=('real',)
+    ))
+
+    from data.svcd import SVCDDataset
+    return build_eval_dataloader(SVCDDataset, configs)
+
+
 @DATA.register_func('LEVIRCD_train_dataset')
 def build_levircd_train_dataset(C):
     configs = get_common_train_configs(C)
@@ -274,6 +325,34 @@ def build_levircd_p2v_eval_dataset(C):
     return build_eval_dataloader(LEVIRCDDataset, configs)
 
 
+@DATA.register_func('LEVIRCD_ESCNet_train_dataset')
+def build_levircd_escnet_train_dataset(C):
+    configs = get_common_train_configs(C)
+    configs.update(dict(
+        transforms=(Choose(
+            HorizontalFlip(), VerticalFlip(), 
+            Rotate('90'), Rotate('180'), Rotate('270'),
+            Shift(), 
+            Identity()), _RGB2RGBXYLAB(), None),
+        root=constants.IMDB_LEVIRCD,
+    ))
+
+    from data.levircd import LEVIRCDDataset
+    return build_train_dataloader(LEVIRCDDataset, configs, C)
+
+
+@DATA.register_func('LEVIRCD_ESCNet_eval_dataset')
+def build_levircd_escnet_eval_dataset(C):
+    configs = get_common_eval_configs(C)
+    configs.update(dict(
+        transforms=(None, _RGB2RGBXYLAB(), None),
+        root=constants.IMDB_LEVIRCD,
+    ))
+
+    from data.levircd import LEVIRCDDataset
+    return build_eval_dataloader(LEVIRCDDataset, configs)
+
+
 @DATA.register_func('WHU_train_dataset')
 def build_whu_train_dataset(C):
     configs = get_common_train_configs(C)
@@ -323,6 +402,34 @@ def build_whu_p2v_eval_dataset(C):
     configs = get_common_eval_configs(C)
     configs.update(dict(
         transforms=(None, Normalize(mu=np.array([110.2008, 100.63983, 95.99475]), sigma=np.array([58.14765, 56.46975, 55.332195])), None),
+        root=constants.IMDB_WHU,
+    ))
+
+    from data.whu import WHUDataset
+    return build_eval_dataloader(WHUDataset, configs)
+
+
+@DATA.register_func('WHU_ESCNet_train_dataset')
+def build_whu_escnet_train_dataset(C):
+    configs = get_common_train_configs(C)
+    configs.update(dict(
+        transforms=(Choose(
+            HorizontalFlip(), VerticalFlip(), 
+            Rotate('90'), Rotate('180'), Rotate('270'),
+            Shift(), 
+            Identity()), _RGB2RGBXYLAB(), None),
+        root=constants.IMDB_WHU,
+    ))
+
+    from data.whu import WHUDataset
+    return build_train_dataloader(WHUDataset, configs, C)
+
+
+@DATA.register_func('WHU_ESCNet_eval_dataset')
+def build_whu_escnet_eval_dataset(C):
+    configs = get_common_eval_configs(C)
+    configs.update(dict(
+        transforms=(None, _RGB2RGBXYLAB(), None),
         root=constants.IMDB_WHU,
     ))
 

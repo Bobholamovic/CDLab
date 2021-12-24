@@ -125,3 +125,9 @@ def build_ifn_model(C):
 def build_bit_model(C):
     from models.bit import define_G
     return define_G(C['bit_arch'])
+
+
+@MODELS.register_func('ESCNet_model')
+def build_escnet_model(C):
+    from models.escnet import build_escnet
+    return build_escnet(**C['escnet_model'])
