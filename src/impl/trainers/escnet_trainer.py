@@ -52,7 +52,6 @@ class ESCNetTrainer(CDTrainer, SSNMixin):
         self.model.train()
         
         for i, (t1, t2, tar) in enumerate(pb):
-            breakpoint()
             t1, t2, tar = t1.to(self.device), t2.to(self.device), tar.to(self.device)
             R = self.make_onehot(tar)
             
