@@ -1,14 +1,13 @@
 # WHU+BIT
 
-repeats: 1
-optimizer: SGD
-lr: 0.01
-weight_decay: 0.0005
+lr: 0.0001
 schedulers:
-  - name: ExponentialLR
-    gamma: 0.975
-num_epochs: 200
-track_intvl: 40
+  - name: MultiStepLR
+    milestones:
+      - 15
+      - 20
+      - 25
+    gamma: 0.75
 out_dir: bit
 model: BIT
 
