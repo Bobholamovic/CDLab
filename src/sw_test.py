@@ -7,6 +7,7 @@ from glob import iglob
 import torch
 import numpy as np
 from skimage.io import imread, imsave
+from skimage.color import rgb2lab
 
 import core
 import impl.builders
@@ -71,6 +72,28 @@ class Preprocessor:
         im = to_tensor(im).unsqueeze(0).float()
         im = im.to(self.device)
         return im
+
+
+class ESCNetPrepocessor:
+    def __init__(self, device):
+        self.device = device
+
+    @staticmethod
+    def _get_xy(feats):
+        # Get position features
+        h, w, _ = feats.shape
+        x = np.tile(np.arange(w), (h, 1))
+        y = np.tile(np.arange(h), (w, 1)).T
+        return x, y
+
+    def __call__(self, rgb):
+        lab = rgb2lab(rgb)
+        x, y = self._get_xy(lab)
+        xylab = np.concatenate([x[...,np.newaxis], y[...,np.newaxis], lab], axis=-1)
+        xylab = xylab.astype(np.float32)
+        tensor = to_tensor(xylab).unsqueeze(0).float()
+        tensor = tensor.to(self.device)
+        return tensor
 
 
 class PostProcessor:
@@ -144,7 +167,10 @@ def main():
     logger = R['Logger']
     model = prepare_model(args)
 
-    prep = Preprocessor(args['mu'], args['sigma'], args['device'])
+    if args['model'] == 'ESCNet':
+        prep = ESCNetPrepocessor(args['device'])
+    else:
+        prep = Preprocessor(args['mu'], args['sigma'], args['device'])
     postp = PostProcessor(args['out_ch'])
 
     prec, rec, f1, acc = Precision(mode='accum'), Recall(mode='accum'), F1Score(mode='accum'), Accuracy(mode='accum')
