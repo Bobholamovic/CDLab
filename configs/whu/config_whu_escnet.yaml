@@ -1,5 +1,7 @@
 # WHU+ESCNet
 
+lr: 0.001
+num_epochs: 40
 out_dir: escnet
 criterion: WNLL+Cmpct
 model: ESCNet
@@ -18,5 +20,8 @@ escnet_model:
     - 0.0
     - 0.0
     - 0.0
-alpha: 0.1
+lambda:
+  - 0.5
+  - 0.01
+  - 0.1
 merge_on: False

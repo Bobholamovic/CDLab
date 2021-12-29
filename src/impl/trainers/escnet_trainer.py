@@ -33,7 +33,7 @@ class SSNMixin:
 class ESCNetTrainer(CDTrainer, SSNMixin):
     def __init__(self, settings):
         super().__init__(settings['model'], settings['dataset'], settings['criterion'], settings['optimizer'], settings)
-        self.alpha = settings['alpha']
+        self.lambda_ = settings['lambda']
         self.merge = settings['merge_on']
         self.n_spixels = self.model.ssn.n_spixels
         self.critn_cd, self.critn_cmpct = self.criterion
@@ -61,7 +61,7 @@ class ESCNetTrainer(CDTrainer, SSNMixin):
             pred = torch.nn.functional.log_softmax(pred, dim=1)
             pred_ds = torch.nn.functional.log_softmax(pred_ds, dim=1)
 
-            loss_cd = self.critn_cd(pred, tar) + 0.5*self.critn_cd(pred_ds, tar)
+            loss_cd = self.critn_cd(pred, tar) + self.lambda_[0]*self.critn_cd(pred_ds, tar)
 
             loss_cmpct, loss_recon = 0, 0
 
@@ -72,7 +72,7 @@ class ESCNetTrainer(CDTrainer, SSNMixin):
                 loss_cmpct += self.critn_cmpct(spixel_map, cvrted_feats_)
                 loss_recon += self.calc_recon_loss(R_recon, R)
             
-            loss = loss_cd + 0.1 * (loss_recon + self.alpha * loss_cmpct)
+            loss = loss_cd + self.lambda_[1] * loss_cmpct + self.lambda_[2] * loss_recon
             
             losses.update(loss.item(), n=self.batch_size)
             losses_cd.update(loss_cd.item(), n=self.batch_size)
@@ -137,7 +137,7 @@ class ESCNetTrainer(CDTrainer, SSNMixin):
                 pred = torch.nn.functional.log_softmax(pred, dim=1)
                 pred_ds = torch.nn.functional.log_softmax(pred_ds, dim=1)
 
-                loss_cd = self.critn_cd(pred, tar) + 0.5*self.critn_cd(pred_ds, tar)
+                loss_cd = self.critn_cd(pred, tar) + self.lambda_[0]*self.critn_cd(pred_ds, tar)
 
                 loss_cmpct, loss_recon = 0, 0
 
@@ -148,7 +148,7 @@ class ESCNetTrainer(CDTrainer, SSNMixin):
                     loss_cmpct += self.critn_cmpct(spixel_map, cvrted_feats_)
                     loss_recon += self.calc_recon_loss(R_recon, R)
                 
-                loss = loss_cd + 0.1 * (loss_recon + self.alpha * loss_cmpct)
+                loss = loss_cd + self.lambda_[1] * loss_cmpct + self.lambda_[2] * loss_recon
                 
                 losses.update(loss.item(), n=self.batch_size)
                 losses_cd.update(loss_cd.item(), n=self.batch_size)
