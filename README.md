@@ -95,7 +95,6 @@ SNUNet | `SNUNet` | [paper](https://ieeexplore.ieee.org/document/9355573)
 BIT | `BIT` | [paper](https://ieeexplore.ieee.org/document/9491802)
 L-UNet | `LUNet` | [paper](https://ieeexplore.ieee.org/document/9352207)
 DSAMNet | `DSAMNet` | [paper](https://ieeexplore.ieee.org/document/9467555)
-P2V-CD | `P2V` | 
 
 ## Supported Datasets
 
