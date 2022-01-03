@@ -12,7 +12,7 @@ English | [简体中文](README_zh-CN.md)
 
 > opencv-python==4.1.1  
   pytorch==1.6.0  
-  torchvision==0.7.0 
+  torchvision==0.7.0  
   pyyaml==5.1.2  
   scikit-image==0.15.0  
   scikit-learn==0.21.3  
