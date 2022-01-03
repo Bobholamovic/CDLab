@@ -115,7 +115,7 @@ LEVIR building change detection dataset | `LEVIRCD` | [website](https://justchen
 
 ## 开发指南
 
-PyTorch 版本的开发指南仍在编写中，目前暂时可参考 [PaddlePaddle 版本的文档](https://github.com/Bobholamovic/CDLab-PP/docs)，大部分内容其实是相似的。
+PyTorch 版本的开发指南仍在编写中，目前暂时可参考 [PaddlePaddle 版本的文档](https://github.com/Bobholamovic/CDLab-PP/tree/master/docs)，大部分内容其实是相似的。
 
 ## 开源许可证
 
