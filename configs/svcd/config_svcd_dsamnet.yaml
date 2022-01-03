@@ -1,0 +1,17 @@
+# SVCD+DSAMNet
+
+out_dir: dsamnet
+criterion: BC
+model: DSAMNet
+out_type: dist
+
+dsamnet_model:
+  in_ch: 3
+  out_ch: 1
+  width: 64
+  backbone: resnet18
+  ca_ratio: 8
+  sa_kernel: 7
+threshold: 1
+lambda: 0.1
+aux_critn: Dice

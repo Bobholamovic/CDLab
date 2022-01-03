@@ -17,7 +17,7 @@ from core.config import parse_args
 
 def main():
     # Set random seed
-    RNG_SEED = 1
+    RNG_SEED = 114514
     random.seed(RNG_SEED)
     np.random.seed(RNG_SEED)
     torch.manual_seed(RNG_SEED)
@@ -30,17 +30,24 @@ def main():
     def parser_configurator(parser):
         parser.add_argument('--crop_size', type=int, default=256, metavar='P', 
                             help="patch size (default: %(default)s)")
+        parser.add_argument('--mu', type=float, nargs='+', default=(0.0,))
+        parser.add_argument('--sigma', type=float, nargs='+', default=(255.0,))
         parser.add_argument('--sched_on', action='store_true')
+        parser.add_argument('--schedulers', type=dict, nargs='*')
         parser.add_argument('--tb_on', action='store_true')
         parser.add_argument('--tb_intvl', type=int, default=100)
         parser.add_argument('--suffix_off', action='store_true')
         parser.add_argument('--save_on', action='store_true')
         parser.add_argument('--out_dir', default='')
         parser.add_argument('--weights', type=float, nargs='+', default=None)
+        parser.add_argument('--out_type', type=str, choices=['logits', 'logits2', 'dist'], default='logits')
 
         return parser
         
     args = parse_args(parser_configurator)
+
+    if args['dataset'] == 'OSCD' and args['tb_on']:
+        raise NotImplementedError("Currently, data visualization through TensorBoard on the OSCD dataset is not supported.")
 
     trainer = R['Trainer_switcher'](args)
 

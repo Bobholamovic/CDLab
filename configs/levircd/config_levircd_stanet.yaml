@@ -1,0 +1,13 @@
+# LEVIR-CD+STANet
+
+out_dir: stanet
+criterion: BC
+model: STANet
+out_type: dist
+
+stanet_model:
+  in_ch: 3
+  width: 64
+  att_type: PAM
+  ds: 1
+threshold: 1

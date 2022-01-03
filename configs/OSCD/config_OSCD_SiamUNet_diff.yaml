@@ -1,5 +1,0 @@
-# OSCD+SiamUNet_diff
-
-model: SiamUNet_diff
-out_dir: SiamUNet_diff
-suffix_off: True

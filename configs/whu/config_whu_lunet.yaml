@@ -1,0 +1,4 @@
+# WHU+L-UNet
+
+out_dir: lunet
+model: LUNet

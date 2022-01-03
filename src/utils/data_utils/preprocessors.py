@@ -1,9 +1,10 @@
 from copy import deepcopy
 
 import numpy as np
+import skimage
 
 
-__all__ = ['CenterCrop', 'Normalize']
+__all__ = ['CenterCrop', 'Normalize', 'Resize']
 
 
 def _isseq(x): return isinstance(x, (tuple, list))
@@ -75,3 +76,23 @@ class Normalize(Preprocess):
         return super().__repr__()+"\nmu={}\nsigma={}\nzscore={}\nchn_wise={}".format(
             self.mu, self.sigma, self.zscore, self.chn_wise
         )
+
+
+class Resize(Preprocess):
+    def __init__(self, size):
+        super().__init__()
+        self.size = size if _isseq(size) else (size, size)
+
+    def _process(self, x):
+        h, w = x.shape[:2]
+
+        nh, nw = self.size
+
+        if nh==h or nw==w:
+            return x
+
+        order = 1 if np.issubdtype(x.dtype, np.floating) else 0
+        return skimage.transform.resize(x, self.size, order=order, preserve_range=True, anti_aliasing=False).astype(x.dtype)
+
+    def __repr__(self):
+        return super().__repr__()+"\nsize={}".format(self.size)

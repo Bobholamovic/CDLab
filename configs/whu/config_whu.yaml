@@ -1,0 +1,58 @@
+# Basic configurations on WHU dataset
+
+
+# Data
+dataset: WHU
+num_workers: 2
+repeats: 7
+subset: val
+crop_size: 256
+
+
+# Optimizer
+optimizer: Adam
+lr: 0.0004
+weight_decay: 0.0
+load_optim: False
+save_optim: False
+sched_on: True
+schedulers:
+  - name: StepLR
+    step_size: 15
+    gamma: 0.2
+
+
+# Training related
+batch_size: 8
+num_epochs: 30
+resume: ''
+anew: False
+device: cuda
+
+
+# Experiment
+exp_dir: ../exp/
+# tag: ''
+# suffix: ''
+# DO NOT specify exp_config
+debug_on: False
+inherit_off: False
+log_off: False
+track_intvl: 10
+tb_on: False
+tb_intvl: 500
+suffix_off: True
+save_on: False
+out_dir: ''
+
+
+# Criterion
+criterion: WNLL
+weights: 
+  - 0.5   # Weight of no-change class
+  - 0.5   # Weight of change class
+
+
+# Model
+model: 
+out_type: logits2

@@ -1,0 +1,15 @@
+# SVCD+BIT
+
+out_dir: bit
+model: BIT
+
+bit_model:
+  in_ch: 3
+  out_ch: 2
+  backbone: 'resnet18'
+  n_stages: 4
+  token_len: 4
+  enc_with_pos: True
+  enc_depth: 1
+  dec_depth: 8
+  dec_head_dim: 8

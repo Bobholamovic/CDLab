@@ -1,0 +1,5 @@
+# LEVIR-CD+SNUNet
+
+lr: 0.0008
+out_dir: snunet
+model: SNUNet

@@ -129,11 +129,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-# Experiment folder
-/exp/
-
-# Configuration folder
-/configs/**/*
-!/configs/**/
-!/configs/**/*.yaml

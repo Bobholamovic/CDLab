@@ -5,42 +5,31 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ._blocks import BasicConv, MaxPool2x2
-
-
-class Conv7x7(BasicConv):
-    def __init__(self, in_ch, out_ch, pad='zero', bn=False, act=False, **kwargs):
-        super().__init__(in_ch, out_ch, 7, pad, bn, act, **kwargs)
-
-
-class MaxUnPool2x2(nn.MaxUnpool2d):
-    def __init__(self, **extra):
-        super().__init__(kernel_size=2, stride=(2,2), padding=(0,0), **extra)
+from ._blocks import Conv7x7, MaxPool2x2, MaxUnPool2x2
 
 
 class CDNet(nn.Module):
     def __init__(self, in_ch, out_ch):
         super().__init__()
-        self.conv1 = Conv7x7(in_ch, 64, bn=True, act=True)
+
+        self.conv1 = Conv7x7(in_ch, 64, norm=True, act=True)
         self.pool1 = MaxPool2x2(return_indices=True)
-        self.conv2 = Conv7x7(64, 64, bn=True, act=True)
+        self.conv2 = Conv7x7(64, 64, norm=True, act=True)
         self.pool2 = MaxPool2x2(return_indices=True)
-        self.conv3 = Conv7x7(64, 64, bn=True, act=True)
+        self.conv3 = Conv7x7(64, 64, norm=True, act=True)
         self.pool3 = MaxPool2x2(return_indices=True)
-        self.conv4 = Conv7x7(64, 64, bn=True, act=True)
+        self.conv4 = Conv7x7(64, 64, norm=True, act=True)
         self.pool4 = MaxPool2x2(return_indices=True)
-        self.conv5 = Conv7x7(64, 64, bn=True, act=True)
+        self.conv5 = Conv7x7(64, 64, norm=True, act=True)
         self.upool4 = MaxUnPool2x2()
-        self.conv6 = Conv7x7(64, 64, bn=True, act=True)
+        self.conv6 = Conv7x7(64, 64, norm=True, act=True)
         self.upool3 = MaxUnPool2x2()
-        self.conv7 = Conv7x7(64, 64, bn=True, act=True)
+        self.conv7 = Conv7x7(64, 64, norm=True, act=True)
         self.upool2 = MaxUnPool2x2()
-        self.conv8 = Conv7x7(64, 64, bn=True, act=True)
+        self.conv8 = Conv7x7(64, 64, norm=True, act=True)
         self.upool1 = MaxUnPool2x2()
-        self.conv_out = nn.Sequential(
-            Conv7x7(64, out_ch, bn=False, act=False),
-            nn.LogSoftmax(dim=1)
-        )
+        
+        self.conv_out = Conv7x7(64, out_ch, norm=False, act=False)
     
     def forward(self, t1, t2):
         # Concatenation
