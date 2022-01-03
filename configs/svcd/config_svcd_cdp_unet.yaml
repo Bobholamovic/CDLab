@@ -1,0 +1,13 @@
+# SVCD+UNet(CDP)
+
+out_dir: cdp_unet
+model: CDP
+
+cdp_model:
+  arch: Unet
+  encoder_name: resnet18
+  encoder_weights: imagenet
+  in_channels: 3
+  classes: 2
+  siam_encoder: True
+  fusion_form: 'concat'

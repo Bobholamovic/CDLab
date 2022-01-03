@@ -85,3 +85,28 @@ def build_dsamnet_model(C):
 def build_bit_model(C):
     from models.bit import BIT
     return BIT(**C['bit_model'])
+
+
+@MODELS.register_func('CDP_model')
+def build_cdp_model(C):
+    try:
+        import change_detection_pytorch as cdp
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("The change_detection.pytorch library is not available!")
+
+    cdp_model_cfg = C['cdp_model'].copy()
+    arch = cdp_model_cfg.pop('arch')
+    encoder_name = cdp_model_cfg.pop('encoder_name')
+    encoder_weights = cdp_model_cfg.pop('encoder_weights')
+    in_channels = cdp_model_cfg.pop('in_channels')
+    classes = cdp_model_cfg.pop('classes')
+    
+    model = cdp.create_model(
+        arch=arch,
+        encoder_name=encoder_name,
+        encoder_weights=encoder_weights,
+        in_channels=in_channels,
+        classes=classes,
+        **cdp_model_cfg
+    )
+    return model

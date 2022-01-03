@@ -81,6 +81,12 @@ Other frequently used commandline options of `src/sw_test.py` include:
 
 Note however that currently `src/sw_test.py` does not support custom pre-processing or post-processing modules.
 
+## Using Models from Third-Party Libraries
+
+Currently this projects supports the training and evaluation of models from the [change_detection.pytorch](https://github.com/likyoo/change_detection.pytorch) library, which can be achieved by simply modifying the configuration files. Please refer to the example in `configs/svcd/config_svcd_cdp_unet.yaml`。
+
+The version number of the supported change_detection.pytorch library is 0.1.0.
+
 ## Supported Architectures
 
 Architecture | Name | Link

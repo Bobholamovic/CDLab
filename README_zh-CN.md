@@ -81,6 +81,12 @@ python sw_test.py --exp_config PATH_TO_CONFIG_FILE \
 
 不过，请注意当前 `src/sw_test.py` 功能有限，并不支持一些较为复杂的自定义预处理和后处理模块。
 
+## 使用第三方库中的模型
+
+目前本项目支持对 [change_detection.pytorch](https://github.com/likyoo/change_detection.pytorch) 库中模型的训练和评估。您只需通过修改配置文件即可使用 cdp 库中的模型。请参考位于 `configs/svcd/config_svcd_cdp_unet.yaml` 的示例配置文件。
+
+当前支持的 cdp 版本号为 0.1.0。
+
 ## 预置模型列表
 
 模型名称 | 对应名称 | 链接
