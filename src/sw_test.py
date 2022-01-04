@@ -86,7 +86,7 @@ class PostProcessor:
         elif self.out_type == 'logits2':
             return to_array(torch.nn.functional.softmax(pred, dim=1)[0,1])
         elif self.out_type == 'dist':
-            return to_array(pred.squeeze(1))
+            return to_array(pred[0,0])
         else:
             raise ValueError
 
@@ -159,7 +159,7 @@ def main():
             t1 = imread(osp.join(args['t1_dir'], basename))
             t2 = imread(osp.join(args['t2_dir'], basename))
             prob_map = sw_infer(t1, t2, model, args['window_size'], args['stride'], prep, postp)
-            cm = (prob_map>args['thresh']).astype('uint8')
+            cm = (prob_map>args['threshold']).astype('uint8')
             
             prec.update(cm, gt)
             rec.update(cm, gt)
