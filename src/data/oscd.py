@@ -20,8 +20,10 @@ class OSCDDataset(CDDataset):
         transforms=(None, None, None), 
         repeats=1,
         subset='val',
-        cache_level=1
+        cache_level=1,
+        bands='all'
     ):
+        self.bands = bands
         super().__init__(root, phase, transforms, repeats, subset)
         # cache_level=0 for no cache, 1 to cache labels, 2 and higher to cache all.
         self.cache_level = int(cache_level)
@@ -48,9 +50,19 @@ class OSCDDataset(CDDataset):
             # For validation, use the remaining 3 pairs
             cities = cities[-3:]
             
+        if self.bands == 'rgb':
+            band_names = ['B04', 'B03', 'B02']
+        elif self.bands == 'rgbnir':
+            band_names = ['B04', 'B03', 'B02', 'B08']
+        elif self.bands == 'leq20':
+            band_names = ['B04', 'B03', 'B02', 'B08', 'B05', 'B06', 'B07', 'B8A', 'B11', 'B12']
+        elif self.bands == 'all':
+            band_names = ['B04', 'B03', 'B02', 'B08', 'B05', 'B06', 'B07', 'B8A', 'B11', 'B12', 'B01', 'B09', 'B10']
+        else:
+            raise ValueError
         # Use resampled images
-        t1_list = [[join(image_dir, city, "imgs_1_rect", band+'.tif') for band in self._BAND_NAMES] for city in cities]
-        t2_list = [[join(image_dir, city, "imgs_2_rect", band+'.tif') for band in self._BAND_NAMES] for city in cities]
+        t1_list = [[join(image_dir, city, "imgs_1_rect", band+'.tif') for band in band_names] for city in cities]
+        t2_list = [[join(image_dir, city, "imgs_2_rect", band+'.tif') for band in band_names] for city in cities]
         tar_list = [join(target_dir, city, 'cm', city+'-cm.tif') for city in cities]
 
         return t1_list, t2_list, tar_list

@@ -7,6 +7,8 @@ num_workers: 0
 repeats: 300
 subset: val
 crop_size: 96
+mu: 0.0
+sigma: 1.0
 
 
 # Optimizer
@@ -40,6 +42,11 @@ log_off: False
 track_intvl: 10
 tb_on: False
 tb_intvl: 15
+tb_vis_bands:
+  - 0
+  - 1
+  - 2
+tb_vis_norm: minmax
 suffix_off: True
 save_on: False
 out_dir: ''

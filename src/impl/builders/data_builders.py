@@ -117,7 +117,7 @@ def build_oscd_train_dataset(C):
         transforms=(Compose(
             Crop(C['crop_size']),
             FlipRotate()
-        ), Normalize(zscore=True), None),
+        ), Normalize(np.asarray(C['mu']), np.asarray(C['sigma'])), None),
         root=constants.IMDB_OSCD,
         cache_level=2,
     ))
@@ -139,7 +139,7 @@ def build_oscd_train_dataset(C):
 def build_oscd_eval_dataset(C):
     configs = get_common_eval_configs(C)
     configs.update(dict(
-        transforms=(None, Normalize(zscore=True), None),
+        transforms=(None, Normalize(np.asarray(C['mu']), np.asarray(C['sigma'])), None),
         root=constants.IMDB_OSCD,
         cache_level=2
     ))

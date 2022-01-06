@@ -36,6 +36,8 @@ def main():
         parser.add_argument('--schedulers', type=dict, nargs='*')
         parser.add_argument('--tb_on', action='store_true')
         parser.add_argument('--tb_intvl', type=int, default=100)
+        parser.add_argument('--tb_vis_bands', type=int, nargs='+', default=(0,1,2))
+        parser.add_argument('--tb_vis_norm', type=str, default='8bit')
         parser.add_argument('--suffix_off', action='store_true')
         parser.add_argument('--save_on', action='store_true')
         parser.add_argument('--out_dir', default='')
@@ -45,9 +47,6 @@ def main():
         return parser
         
     args = parse_args(parser_configurator)
-
-    if args['dataset'] == 'OSCD' and args['tb_on']:
-        raise NotImplementedError("Currently, data visualization through TensorBoard on the OSCD dataset is not supported.")
 
     trainer = R['Trainer_switcher'](args)
 

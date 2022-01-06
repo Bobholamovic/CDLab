@@ -87,9 +87,9 @@ Currently this projects supports the training and evaluation of models from the 
 
 The version number of the supported change_detection.pytorch library is 0.1.0.
 
-## Supported Architectures
+## Supported Models
 
-Architecture | Name | Link
+Model | Name | Link
 :-:|:-:|:-:
 CDNet | `CDNet` | [paper](https://doi.org/10.1007/s10514-018-9734-5)
 FC-EF | `UNet` | [paper](https://ieeexplore.ieee.org/abstract/document/8451652)
