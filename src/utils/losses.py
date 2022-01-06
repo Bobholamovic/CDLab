@@ -68,12 +68,23 @@ class CombinedLoss_DS(nn.Module):
         return loss
 
 
+# Refer to https://github.com/hubutui/DiceLoss-PyTorch/blob/master/loss.py
 class DiceLoss(nn.Module):
+    def __init__(self, smooth=1, p=2):
+        super().__init__()
+        self.smooth = smooth
+        self.p = p
+
     def forward(self, pred, tar):
         pred, tar = pred.flatten(1), tar.flatten(1)
         prob = F.sigmoid(pred)
-        loss = 2. * (prob * tar).sum(1) / ((prob + tar).sum(1) + 1e-32)
-        return 1 - loss.mean()
+
+        num = (prob*tar).sum(1) + self.smooth
+        den = (prob.pow(self.p) + tar.pow(self.p)).sum(1) + self.smooth
+
+        loss = 1 - num/den
+        
+        return loss.mean()
 
 
 class BCLoss(nn.Module):

@@ -1,5 +1,11 @@
 # SVCD+DSIFN
 
+lr: 0.0001
+schedulers:
+  - name: ReduceLROnPlateau
+    mode: max
+    factor: 0.1
+    patience: 5
 mu:
   - 123.657
   - 116.28
