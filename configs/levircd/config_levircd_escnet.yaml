@@ -1,5 +1,11 @@
 # LEVIRCD+ESCNet
 
+lr: 0.004
+schedulers:
+  - name: StepLR
+    step_size: 20
+    gamma: 0.5
+num_epochs: 80
 out_dir: escnet
 criterion: WNLL+Cmpct
 model: ESCNet
