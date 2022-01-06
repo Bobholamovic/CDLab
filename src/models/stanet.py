@@ -112,7 +112,6 @@ class BAM(nn.Module):
         super().__init__()
 
         self.ds = ds
-        self.act = nn.ReLU()
         self.pool = nn.AvgPool2d(self.ds)
 
         self.val_ch = in_ch
@@ -151,7 +150,6 @@ class PAMBlock(nn.Module):
 
         self.scale = scale
         self.ds = ds
-        self.act = nn.ReLU()
         self.pool = nn.AvgPool2d(self.ds)
 
         self.val_ch = in_ch
