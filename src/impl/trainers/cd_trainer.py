@@ -249,6 +249,8 @@ class CDTrainer(Trainer):
         else:
             t1 = normalize_minmax(t1)
             t2 = normalize_minmax(t2)
+        t1 = np.clip(t1, 0.0, 1.0)
+        t2 = np.clip(t2, 0.0, 1.0)
         return t1, t2
 
     def _process_fetched_feat(self, feat):
