@@ -48,7 +48,12 @@ def build_cdnet_model(C):
 @MODELS.register_func('IFN_model')
 def build_ifn_model(C):
     from models.ifn import DSIFN
-    return DSIFN()
+    model = DSIFN()
+    for p in model.encoder1.parameters():
+        p.requires_grad = False
+    for p in model.encoder2.parameters():
+        p.requires_grad = False
+    return model
 
 
 @MODELS.register_func('SNUNet_model')

@@ -7,7 +7,7 @@ schedulers:
     factor: 0.1
     patience: 5
 mu:
-  - 123.657
+  - 123.675
   - 116.28
   - 103.53
 sigma:

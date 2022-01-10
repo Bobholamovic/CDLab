@@ -1,7 +1,7 @@
 # Implementation of
 # C. Zhang et al., “A deeply supervised image fusion network for change detection in high resolution bi-temporal remote sensing images,” 2020, doi: 10.1016/J.ISPRSJPRS.2020.06.003.
 
-# Adapted from https://github.com/GeoZcx/A-deeply-supervised-image-fusion-network-for-change-detection-in-remote-sensing-images/blob/master/pytorch%20version/DSIFN.py
+# Transferred from https://github.com/GeoZcx/A-deeply-supervised-image-fusion-network-for-change-detection-in-remote-sensing-images/blob/master/pytorch%20version/DSIFN.py
 
 ## Original head information
 # credits: https://github.com/GeoZcx/A-deeply-supervised-image-fusion-network-for-change-detection-in-remote-sensing-images
@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.models import vgg16
 
-from ._blocks import Conv3x3, make_norm
+from ._blocks import Conv1x1, make_norm
 from ._common import ChannelAttention, SpatialAttention
 
 
@@ -19,7 +19,7 @@ class VGG16FeaturePicker(nn.Module):
     def __init__(self, indices=(3,8,15,22,29)):
         super().__init__()
         features = list(vgg16(pretrained=True).features)[:30]
-        self.features = nn.ModuleList(features)
+        self.features = nn.ModuleList(features).eval()
         self.indices = set(indices)
 
     def forward(self, x):
@@ -33,7 +33,9 @@ class VGG16FeaturePicker(nn.Module):
 
 def conv2d_bn(in_ch, out_ch):
     return nn.Sequential(
-        Conv3x3(in_ch, out_ch, norm=True, act=nn.PReLU()),
+        nn.Conv2d(in_ch, out_ch, kernel_size=3, stride=1, padding=1),
+        nn.PReLU(),
+        make_norm(out_ch),
         nn.Dropout(p=0.6),
     )
 
@@ -42,8 +44,7 @@ class DSIFN(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.encoder1 = VGG16FeaturePicker()
-        self.encoder2 = VGG16FeaturePicker()
+        self.encoder1 = self.encoder2 = VGG16FeaturePicker()
 
         self.sa1 = SpatialAttention()
         self.sa2= SpatialAttention()
@@ -56,7 +57,7 @@ class DSIFN(nn.Module):
         self.o1_conv1 = conv2d_bn(1024, 512)
         self.o1_conv2 = conv2d_bn(512, 512)
         self.bn_sa1 = make_norm(512)
-        self.o1_conv3 = nn.Conv2d(512, 1, 1)
+        self.o1_conv3 = Conv1x1(512, 1)
         self.trans_conv1 = nn.ConvTranspose2d(512, 512, kernel_size=2, stride=2)
 
         self.ca2 = ChannelAttention(in_ch=1536)
@@ -65,7 +66,7 @@ class DSIFN(nn.Module):
         self.o2_conv2 = conv2d_bn(512, 256)
         self.o2_conv3 = conv2d_bn(256, 256)
         self.bn_sa2 = make_norm(256)
-        self.o2_conv4 = nn.Conv2d(256, 1, 1)
+        self.o2_conv4 = Conv1x1(256, 1)
         self.trans_conv2 = nn.ConvTranspose2d(256, 256, kernel_size=2, stride=2)
 
         self.ca3 = ChannelAttention(in_ch=768)
@@ -73,7 +74,7 @@ class DSIFN(nn.Module):
         self.o3_conv2 = conv2d_bn(256, 128)
         self.o3_conv3 = conv2d_bn(128, 128)
         self.bn_sa3 = make_norm(128)
-        self.o3_conv4 = nn.Conv2d(128, 1, 1)
+        self.o3_conv4 = Conv1x1(128, 1)
         self.trans_conv3 = nn.ConvTranspose2d(128, 128, kernel_size=2, stride=2)
 
         self.ca4 = ChannelAttention(in_ch=384)
@@ -81,7 +82,7 @@ class DSIFN(nn.Module):
         self.o4_conv2 = conv2d_bn(128, 64)
         self.o4_conv3 = conv2d_bn(64, 64)
         self.bn_sa4 = make_norm(64)
-        self.o4_conv4 = nn.Conv2d(64, 1, 1)
+        self.o4_conv4 = Conv1x1(64, 1)
         self.trans_conv4 = nn.ConvTranspose2d(64, 64, kernel_size=2, stride=2)
 
         self.ca5 = ChannelAttention(in_ch=192)
@@ -89,7 +90,7 @@ class DSIFN(nn.Module):
         self.o5_conv2 = conv2d_bn(64, 32)
         self.o5_conv3 = conv2d_bn(32, 16)
         self.bn_sa5 = make_norm(16)
-        self.o5_conv4 = nn.Conv2d(16, 1, 1)
+        self.o5_conv4 = Conv1x1(16, 1)
 
     def forward(self, t1, t2):
         # Extract bi-temporal features
