@@ -8,6 +8,8 @@
 # https://github.com/likyoo
 #
 
+# Bilinear interpolation is adopted as the default upsampling method, which is different from the paper.
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

@@ -8,6 +8,8 @@
 # https://rcdaudt.github.io/
 # Daudt, R. C., Le Saux, B., & Boulch, A. "Fully convolutional siamese networks for change detection". In 2018 25th IEEE International Conference on Image Processing (ICIP) (pp. 4063-4067). IEEE.
 
+# Dropout layers are disabled by default
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
