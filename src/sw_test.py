@@ -97,16 +97,16 @@ class ESCNetPrepocessor:
 
 
 class PostProcessor:
-    def __init__(self, out_ch, out_idx=0):
-        self.out_ch = out_ch
+    def __init__(self, out_idx=0):
         self.out_idx = out_idx
 
     def __call__(self, pred):
         if isinstance(pred, (tuple, list)):
             pred = pred[self.out_idx]
-        if self.out_ch == 1:
+        out_ch = pred.shape[1]
+        if out_ch == 1:
             return to_array(torch.sigmoid(pred)[0,0])
-        elif self.out_ch == 2:
+        elif out_ch == 2:
             return to_array(torch.softmax(pred, dim=1)[0,1])
         else:
             raise ValueError
@@ -158,7 +158,6 @@ def main():
         parser.add_argument('--sigma', type=float, nargs='+')
         parser.add_argument('--glob', type=str, default='*.png')
         parser.add_argument('--thresh', type=float, default=0.5)
-        parser.add_argument('--out_ch', type=int, default=1)
 
         return parser
     
@@ -171,7 +170,7 @@ def main():
         prep = ESCNetPrepocessor(args['device'])
     else:
         prep = Preprocessor(args['mu'], args['sigma'], args['device'])
-    postp = PostProcessor(args['out_ch'])
+    postp = PostProcessor()
 
     prec, rec, f1, acc = Precision(mode='accum'), Recall(mode='accum'), F1Score(mode='accum'), Accuracy(mode='accum')
     
