@@ -6,6 +6,8 @@
 ## Original head information
 # credits: https://github.com/GeoZcx/A-deeply-supervised-image-fusion-network-for-change-detection-in-remote-sensing-images
 
+# Dropout layers are disabled by default
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -31,17 +33,19 @@ class VGG16FeaturePicker(nn.Module):
         return picked_feats
 
 
-def conv2d_bn(in_ch, out_ch):
-    return nn.Sequential(
+def conv2d_bn(in_ch, out_ch, with_dropout=True):
+    lst = [
         nn.Conv2d(in_ch, out_ch, kernel_size=3, stride=1, padding=1),
         nn.PReLU(),
         make_norm(out_ch),
-        nn.Dropout(p=0.6),
-    )
+    ]
+    if with_dropout:
+        lst.append(nn.Dropout(p=0.6))
+    return nn.Sequential(*lst)
 
 
 class DSIFN(nn.Module):
-    def __init__(self):
+    def __init__(self, use_dropout=False):
         super().__init__()
 
         self.encoder1 = self.encoder2 = VGG16FeaturePicker()
@@ -54,41 +58,41 @@ class DSIFN(nn.Module):
 
         self.ca1 = ChannelAttention(in_ch=1024)
         self.bn_ca1 = make_norm(1024)
-        self.o1_conv1 = conv2d_bn(1024, 512)
-        self.o1_conv2 = conv2d_bn(512, 512)
+        self.o1_conv1 = conv2d_bn(1024, 512, use_dropout)
+        self.o1_conv2 = conv2d_bn(512, 512, use_dropout)
         self.bn_sa1 = make_norm(512)
         self.o1_conv3 = Conv1x1(512, 1)
         self.trans_conv1 = nn.ConvTranspose2d(512, 512, kernel_size=2, stride=2)
 
         self.ca2 = ChannelAttention(in_ch=1536)
         self.bn_ca2 = make_norm(1536)
-        self.o2_conv1 = conv2d_bn(1536, 512)
-        self.o2_conv2 = conv2d_bn(512, 256)
-        self.o2_conv3 = conv2d_bn(256, 256)
+        self.o2_conv1 = conv2d_bn(1536, 512, use_dropout)
+        self.o2_conv2 = conv2d_bn(512, 256, use_dropout)
+        self.o2_conv3 = conv2d_bn(256, 256, use_dropout)
         self.bn_sa2 = make_norm(256)
         self.o2_conv4 = Conv1x1(256, 1)
         self.trans_conv2 = nn.ConvTranspose2d(256, 256, kernel_size=2, stride=2)
 
         self.ca3 = ChannelAttention(in_ch=768)
-        self.o3_conv1 = conv2d_bn(768, 256)
-        self.o3_conv2 = conv2d_bn(256, 128)
-        self.o3_conv3 = conv2d_bn(128, 128)
+        self.o3_conv1 = conv2d_bn(768, 256, use_dropout)
+        self.o3_conv2 = conv2d_bn(256, 128, use_dropout)
+        self.o3_conv3 = conv2d_bn(128, 128, use_dropout)
         self.bn_sa3 = make_norm(128)
         self.o3_conv4 = Conv1x1(128, 1)
         self.trans_conv3 = nn.ConvTranspose2d(128, 128, kernel_size=2, stride=2)
 
         self.ca4 = ChannelAttention(in_ch=384)
-        self.o4_conv1 = conv2d_bn(384, 128)
-        self.o4_conv2 = conv2d_bn(128, 64)
-        self.o4_conv3 = conv2d_bn(64, 64)
+        self.o4_conv1 = conv2d_bn(384, 128, use_dropout)
+        self.o4_conv2 = conv2d_bn(128, 64, use_dropout)
+        self.o4_conv3 = conv2d_bn(64, 64, use_dropout)
         self.bn_sa4 = make_norm(64)
         self.o4_conv4 = Conv1x1(64, 1)
         self.trans_conv4 = nn.ConvTranspose2d(64, 64, kernel_size=2, stride=2)
 
         self.ca5 = ChannelAttention(in_ch=192)
-        self.o5_conv1 = conv2d_bn(192, 64)
-        self.o5_conv2 = conv2d_bn(64, 32)
-        self.o5_conv3 = conv2d_bn(32, 16)
+        self.o5_conv1 = conv2d_bn(192, 64, use_dropout)
+        self.o5_conv2 = conv2d_bn(64, 32, use_dropout)
+        self.o5_conv3 = conv2d_bn(32, 16, use_dropout)
         self.bn_sa5 = make_norm(16)
         self.o5_conv4 = Conv1x1(16, 1)
 
