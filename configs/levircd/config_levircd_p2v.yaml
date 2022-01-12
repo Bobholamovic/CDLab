@@ -1,6 +1,6 @@
 # LEVIR-CD+P2V
 
-out_dir: P2V
+out_dir: p2v
 criterion: WBCE
 model: P2V
 
