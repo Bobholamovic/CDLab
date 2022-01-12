@@ -9,7 +9,6 @@ from torch.utils.data import DataLoader
 import constants
 from utils.data_utils.augmentations import *
 from utils.data_utils.preprocessors import *
-from utils.data_utils.preprocessors import Preprocess
 from core.misc import DATA, R
 from core.data import (
     build_train_dataloader, build_eval_dataloader, get_common_train_configs, get_common_eval_configs
@@ -55,7 +54,7 @@ def build_ac_szada_eval_dataset(C):
     from data.ac_szada import AC_SzadaDataset
     return DataLoader(
         AC_SzadaDataset(**configs),
-        batch_size=1,
+        batch_size=C['batch_size'],
         shuffle=False,
         num_workers=0,
         drop_last=False,
@@ -102,7 +101,7 @@ def build_ac_tiszadob_eval_dataset(C):
     from data.ac_tiszadob import AC_TiszadobDataset
     return DataLoader(
         AC_TiszadobDataset(**configs),
-        batch_size=1,
+        batch_size=C['batch_size'],
         shuffle=False,
         num_workers=0,
         drop_last=False,
@@ -139,7 +138,7 @@ def build_oscd_train_dataset(C):
 def build_oscd_eval_dataset(C):
     configs = get_common_eval_configs(C)
     configs.update(dict(
-        transforms=(None, Normalize(np.asarray(C['mu']), np.asarray(C['sigma'])), None),
+        transforms=(None, Normalize(zscore=True), None),
         root=constants.IMDB_OSCD,
         cache_level=2
     ))
@@ -147,7 +146,7 @@ def build_oscd_eval_dataset(C):
     from data.oscd import OSCDDataset
     return DataLoader(
         OSCDDataset(**configs),
-        batch_size=1,
+        batch_size=C['batch_size'],
         shuffle=False,
         num_workers=0,
         drop_last=False,
@@ -164,7 +163,7 @@ def build_svcd_train_dataset(C):
             Rotate('90'), Rotate('180'), Rotate('270'),
             Shift(), 
             Identity()),
-        ), Normalize(np.asarray(C['mu']), np.asarray(C['sigma'])), None),
+        ), Normalize(zscore=True), None),
         root=constants.IMDB_SVCD,
         sets=('real',)
     ))
@@ -185,7 +184,14 @@ def build_svcd_eval_dataset(C):
     ))
 
     from data.svcd import SVCDDataset
-    return build_eval_dataloader(SVCDDataset, configs)
+    return DataLoader(
+        SVCDDataset(**configs),
+        batch_size=C['batch_size'],
+        shuffle=False,
+        num_workers=C['num_workers'],
+        drop_last=False,
+        pin_memory=C['device']!='cpu'
+    )
 
 
 @DATA.register_func('LEVIRCD_train_dataset')
@@ -213,7 +219,14 @@ def build_levircd_eval_dataset(C):
     ))
 
     from data.levircd import LEVIRCDDataset
-    return build_eval_dataloader(LEVIRCDDataset, configs)
+    return DataLoader(
+        LEVIRCDDataset(**configs),
+        batch_size=C['batch_size'],
+        shuffle=False,
+        num_workers=C['num_workers'],
+        drop_last=False,
+        pin_memory=C['device']!='cpu'
+    )
 
 
 @DATA.register_func('WHU_train_dataset')
@@ -241,4 +254,11 @@ def build_whu_eval_dataset(C):
     ))
 
     from data.whu import WHUDataset
-    return build_eval_dataloader(WHUDataset, configs)
+    return DataLoader(
+        WHUDataset(**configs),
+        batch_size=C['batch_size'],
+        shuffle=False,
+        num_workers=C['num_workers'],
+        drop_last=False,
+        pin_memory=C['device']!='cpu'
+    )

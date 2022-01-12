@@ -1,5 +1,6 @@
 import os
 import os.path as osp
+from concurrent.futures import ThreadPoolExecutor
 
 import torch
 import numpy as np
@@ -54,8 +55,10 @@ class CDTrainer(Trainer):
             self.eval_step = 0
 
         # Whether to save network output
-        self.out_dir = self.ctx['out_dir']
         self.save = self.ctx['save_on'] and not self.debug
+        if self.save: 
+            self._mt_pool = ThreadPoolExecutor(max_workers=2)
+        self.out_dir = self.ctx['out_dir']
 
         # Build lr schedulers
         self.sched_on = self.ctx['sched_on'] and self.is_training
@@ -116,7 +119,7 @@ class CDTrainer(Trainer):
             pred = self._process_model_out(out)
             
             loss = self.criterion(pred, tar)
-            losses.update(loss.item(), n=self.batch_size)
+            losses.update(loss.item(), n=tar.shape[0])
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -165,6 +168,7 @@ class CDTrainer(Trainer):
         with torch.no_grad():
             for i, (name, t1, t2, tar) in enumerate(pb):
                 t1, t2, tar = self._prepare_data(t1, t2, tar)
+                batch_size = tar.shape[0]
 
                 fetch_dict = self._set_fetch_dict()
                 out_dict = FeatureContainer()
@@ -175,16 +179,16 @@ class CDTrainer(Trainer):
                 pred = self._process_model_out(out)
 
                 loss = self.criterion(pred, tar)
-                losses.update(loss.item())
+                losses.update(loss.item(), n=batch_size)
 
                 # Convert to numpy arrays
                 prob = self._pred_to_prob(pred)
-                prob = to_array(prob[0])
+                prob = prob.cpu().numpy()
                 cm = (prob>0.5).astype('uint8')
-                tar = to_array(tar[0]).astype('uint8')
+                tar = tar.cpu().numpy().astype('uint8')
 
                 for m in metrics:
-                    m.update(cm, tar)
+                    m.update(cm, tar, n=batch_size)
 
                 desc = (start_pattern+" Loss: {:.4f} ({:.4f})").format(i+1, len_eval, losses.val, losses.avg)
                 for m in metrics:
@@ -197,22 +201,26 @@ class CDTrainer(Trainer):
 
                 if self.tb_on:
                     if dump:
-                        t1, t2 = to_array(t1[0]), to_array(t2[0])
-                        t1, t2 = self._denorm_image(t1), self._denorm_image(t2)
-                        t1, t2 = self._process_input_pairs(t1, t2)
-                        self.tb_writer.add_image("Eval/t1", t1, self.eval_step, dataformats='HWC')
-                        self.tb_writer.add_image("Eval/t2", t2, self.eval_step, dataformats='HWC')
-                        self.tb_writer.add_image("Eval/labels", quantize(tar), self.eval_step, dataformats='HW')
-                        self.tb_writer.add_image("Eval/prob", to_pseudo_color(quantize(prob)), self.eval_step, dataformats='HWC')
-                        self.tb_writer.add_image("Eval/cm", quantize(cm), self.eval_step, dataformats='HW')
-                        for key, feats in out_dict.items():
-                            for idx, feat in enumerate(feats):
-                                feat = self._process_fetched_feat(feat)
-                                self.tb_writer.add_image(f"Train/{key}_{idx}", feat, self.eval_step)
-                    self.eval_step += 1
+                        for j in range(batch_size):
+                            t1_, t2_ = to_array(t1[j]), to_array(t2[j])
+                            t1_, t2_ = self._denorm_image(t1_), self._denorm_image(t2_)
+                            t1_, t2_ = self._process_input_pairs(t1_, t2_)
+                            self.tb_writer.add_image("Eval/t1", t1_, self.eval_step, dataformats='HWC')
+                            self.tb_writer.add_image("Eval/t2", t2_, self.eval_step, dataformats='HWC')
+                            self.tb_writer.add_image("Eval/labels", quantize(tar[j]), self.eval_step, dataformats='HW')
+                            self.tb_writer.add_image("Eval/prob", to_pseudo_color(quantize(prob[j])), self.eval_step, dataformats='HWC')
+                            self.tb_writer.add_image("Eval/cm", quantize(cm[j]), self.eval_step, dataformats='HW')
+                            for key, feats in out_dict.items():
+                                for idx, feat in enumerate(feats):
+                                    feat = self._process_fetched_feat(feat[j])
+                                    self.tb_writer.add_image(f"Eval/{key}_{idx}", feat, self.eval_step)
+                            self.eval_step += 1
+                    else:
+                        self.eval_step += batch_size
                 
                 if self.save:
-                    self.save_image(name[0], quantize(cm), epoch)
+                    for j in range(batch_size):
+                        self.save_image(name[j], quantize(cm[j]), epoch)
 
         if self.tb_on:
             self.tb_writer.add_scalar("Eval/loss", losses.avg, self.eval_step)
@@ -234,7 +242,7 @@ class CDTrainer(Trainer):
             auto_make=True,
             underline=True
         )
-        return io.imsave(out_path, image)
+        return self._mt_pool.submit(io.imsave, out_path, image)
 
     def _denorm_image(self, x):
         return x*np.asarray(self.ctx['sigma']) + np.asarray(self.ctx['mu'])
@@ -254,8 +262,8 @@ class CDTrainer(Trainer):
         return t1, t2
 
     def _process_fetched_feat(self, feat):
-        feat = normalize_minmax(feat.mean(1))
-        feat = quantize(to_array(feat[0]))
+        feat = normalize_minmax(feat.mean(0))
+        feat = quantize(to_array(feat))
         feat = to_pseudo_color(feat)
         return feat
 
