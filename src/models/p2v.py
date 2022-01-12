@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from ._blocks import Conv1x1, Conv3x3, MaxPool2x2
 
 
-class ResBlock(nn.Module):
+class SimpleResBlock(nn.Module):
     def __init__(self, in_ch, out_ch):
         super().__init__()
         self.conv1 = Conv3x3(in_ch, out_ch, norm=True, act=True)
@@ -18,7 +18,7 @@ class ResBlock(nn.Module):
         return F.relu(x + self.conv2(x))
 
 
-class ResBlock2(nn.Module):
+class ResBlock(nn.Module):
     def __init__(self, in_ch, out_ch):
         super().__init__()
         self.conv1 = Conv3x3(in_ch, out_ch, norm=True, act=True)
@@ -33,7 +33,7 @@ class ResBlock2(nn.Module):
 class DecBlock(nn.Module):
     def __init__(self, in_ch1, in_ch2, out_ch):
         super().__init__()
-        self.conv_fuse = ResBlock(in_ch1+in_ch2, out_ch)
+        self.conv_fuse = SimpleResBlock(in_ch1+in_ch2, out_ch)
 
     def forward(self, x1, x2):
         x2 = F.interpolate(x2, size=x1.shape[2:])
@@ -101,13 +101,13 @@ class PairEncoder(nn.Module):
 
         self.n_layers = 3
 
-        self.conv1 = ResBlock(2*in_ch, enc_chs[0])
+        self.conv1 = SimpleResBlock(2*in_ch, enc_chs[0])
         self.pool1 = MaxPool2x2()
 
-        self.conv2 = ResBlock(enc_chs[0]+add_chs[0], enc_chs[1])
+        self.conv2 = SimpleResBlock(enc_chs[0]+add_chs[0], enc_chs[1])
         self.pool2 = MaxPool2x2()
 
-        self.conv3 = ResBlock2(enc_chs[1]+add_chs[1], enc_chs[2])
+        self.conv3 = ResBlock(enc_chs[1]+add_chs[1], enc_chs[2])
         self.pool3 = MaxPool2x2()
 
     def forward(self, x1, x2, add_feats=None):
