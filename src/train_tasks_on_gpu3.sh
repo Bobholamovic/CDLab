@@ -8,7 +8,7 @@ MODELS=(cdnet unet siamunet-conc siamunet-diff stanet lunet bit ifn snunet p2v e
 # Comparative experiments
 for model in "${MODELS[@]}"
 do
-    if [ model = 'p2v' ]
+    if [ ${model} = 'p2v' ]
     then
         cfg_path='p2v/config_svcd_p2v.yaml' 
     else
