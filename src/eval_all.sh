@@ -2,7 +2,7 @@
 
 export CUDA_VISIBLE_DEVICES=2
 
-MODELS=(cdnet unet siamunet-conc siamunet-diff stanet lunet bit ifn snunet)
+MODELS=(cdnet unet siamunet-conc siamunet-diff stanet lunet bit ifn snunet p2v)
 DATASETS=(svcd levircd whu)
 
 
