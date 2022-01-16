@@ -170,7 +170,7 @@ def main():
             ))
 
             if args['save_on']:
-                imsave(osp.join(args['out_dir'], basename), quantize_8bit(cm))
+                imsave(osp.join(args['out_dir'], basename), quantize_8bit(cm), check_contrast=False)
     except BaseException as e:
         import traceback
         import sys

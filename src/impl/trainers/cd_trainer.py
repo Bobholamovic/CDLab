@@ -1,5 +1,6 @@
 import os
 import os.path as osp
+from functools import partial
 from concurrent.futures import ThreadPoolExecutor
 
 import torch
@@ -242,7 +243,7 @@ class CDTrainer(Trainer):
             auto_make=True,
             underline=True
         )
-        return self._mt_pool.submit(io.imsave, out_path, image)
+        return self._mt_pool.submit(partial(io.imsave, check_contrast=False), out_path, image)
 
     def _denorm_image(self, x):
         return x*np.asarray(self.ctx['sigma']) + np.asarray(self.ctx['mu'])
