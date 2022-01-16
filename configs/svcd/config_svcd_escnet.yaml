@@ -1,5 +1,10 @@
 # SVCD+ESCNet
 
+schedulers:
+  - name: StepLR
+    step_size: 20
+    gamma: 0.5
+num_epochs: 50
 out_dir: escnet
 criterion: WNLL+Cmpct
 model: ESCNet
