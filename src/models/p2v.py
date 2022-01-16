@@ -263,14 +263,12 @@ class P2VNet(nn.Module):
 class VideoEncoder_2DOnly(nn.Module):
     def __init__(self, in_ch, enc_chs=(64,128)):
         super().__init__()
-        if in_ch != 3:
-            raise NotImplementedError
 
         self.num_layers = 2
         self.expansion = 4
 
         self.stem = nn.Sequential(
-            nn.Conv3d(3, enc_chs[0], kernel_size=(1,9,9), stride=(1,4,4), padding=(0,4,4), bias=False),
+            nn.Conv3d(in_ch, enc_chs[0], kernel_size=(1,9,9), stride=(1,4,4), padding=(0,4,4), bias=False),
             nn.BatchNorm3d(enc_chs[0]),
             nn.ReLU(True)
         )
@@ -304,6 +302,16 @@ class P2VNet_2DOnly(P2VNet):
     def __init__(self, in_ch, video_len=8, enc_chs_p=(32,64,128), enc_chs_v=(64,164), dec_chs=(256,128,64,32)):
         super().__init__(in_ch, video_len, enc_chs_p, enc_chs_v, dec_chs)
         self.encoder_v = VideoEncoder_2DOnly(in_ch, enc_chs=enc_chs_v)
+
+
+# 2donlyflat
+class P2VNet_2DOnlyFlat(P2VNet):
+    def __init__(self, in_ch, video_len=8, enc_chs_p=(32,64,128), enc_chs_v=(64,164), dec_chs=(256,128,64,32)):
+        super().__init__(in_ch, video_len, enc_chs_p, enc_chs_v, dec_chs)
+        self.encoder_v = VideoEncoder_2DOnly(in_ch*video_len, enc_chs=enc_chs_v)
+
+    def pair_to_video(self, im1, im2, rate_map=None):
+        return super().pair_to_video(im1, im2, rate_map).flatten(1,2).unsqueeze(1)
 
 
 # notemporal

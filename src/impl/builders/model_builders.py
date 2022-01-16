@@ -94,6 +94,12 @@ def build_p2v_decouple_model(C):
     return P2VNet_Decouple(**C['p2v_model'])
 
 
+@MODELS.register_func('P2V-2DOnlyFlat_model')
+def build_p2v_2donlyflat_model(C):
+    from models.p2v import P2VNet_2DOnlyFlat
+    return P2VNet_2DOnlyFlat(**C['p2v_model'])
+
+
 @MODELS.register_func('SNUNet_model')
 def build_snunet_model(C):
     from models.snunet import SNUNet_ECAM
