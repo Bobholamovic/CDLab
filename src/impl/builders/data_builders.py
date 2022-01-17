@@ -54,7 +54,7 @@ def build_ac_szada_eval_dataset(C):
     from data.ac_szada import AC_SzadaDataset
     return DataLoader(
         AC_SzadaDataset(**configs),
-        batch_size=C['batch_size'],
+        batch_size=1,
         shuffle=False,
         num_workers=0,
         drop_last=False,
@@ -101,7 +101,7 @@ def build_ac_tiszadob_eval_dataset(C):
     from data.ac_tiszadob import AC_TiszadobDataset
     return DataLoader(
         AC_TiszadobDataset(**configs),
-        batch_size=C['batch_size'],
+        batch_size=1,
         shuffle=False,
         num_workers=0,
         drop_last=False,
@@ -116,7 +116,7 @@ def build_oscd_train_dataset(C):
         transforms=(Compose(
             Crop(C['crop_size']),
             FlipRotate()
-        ), Normalize(np.asarray(C['mu']), np.asarray(C['sigma'])), None),
+        ), Normalize(zscore=True), None),
         root=constants.IMDB_OSCD,
         cache_level=2,
     ))
@@ -146,7 +146,7 @@ def build_oscd_eval_dataset(C):
     from data.oscd import OSCDDataset
     return DataLoader(
         OSCDDataset(**configs),
-        batch_size=C['batch_size'],
+        batch_size=1,
         shuffle=False,
         num_workers=0,
         drop_last=False,
@@ -163,7 +163,7 @@ def build_svcd_train_dataset(C):
             Rotate('90'), Rotate('180'), Rotate('270'),
             Shift(), 
             Identity()),
-        ), Normalize(zscore=True), None),
+        ), Normalize(np.asarray(C['mu']), np.asarray(C['sigma'])), None),
         root=constants.IMDB_SVCD,
         sets=('real',)
     ))
