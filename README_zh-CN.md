@@ -106,9 +106,6 @@ DSAMNet | `DSAMNet` | [paper](https://ieeexplore.ieee.org/document/9467555)
 
 数据集名称 | 对应名称 | 链接
 :-:|:-:|:-:
-SZTAKI AirChange Benchmark set: Szada set | `AC-Szada` | [website](http://web.eee.sztaki.hu/remotesensing/airchange_benchmark.html)
-SZTAKI AirChange Benchmark set: Tiszadob set | `AC-Tiszadob` | [website](http://web.eee.sztaki.hu/remotesensing/airchange_benchmark.html)
-Onera Satellite Change Detection dataset | `OSCD` | [website](https://rcdaudt.github.io/oscd/)
 Synthetic images and real season-varying remote sensing images | `SVCD` | [google drive](https://drive.google.com/file/d/1GX656JqqOyBi_Ef0w65kDGVto-nHrNs9)
 WHU building change detection dataset | `WHU` | [website](http://study.rsgis.whu.edu.cn/pages/download/building_dataset.html)
 LEVIR building change detection dataset | `LEVIRCD` | [website](https://justchenhao.github.io/LEVIR/)

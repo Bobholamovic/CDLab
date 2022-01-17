@@ -9,34 +9,16 @@ def build_unet_model(C):
     return UNet(6, 2)
 
 
-@MODELS.register_func('UNet_OSCD_model')
-def build_unet_oscd_model(C):
-    from models.unet import UNet
-    return UNet(26, 2)
-
-
 @MODELS.register_func('SiamUNet-diff_model')
 def build_siamunet_diff_model(C):
     from models.siamunet_diff import SiamUNet_diff
     return SiamUNet_diff(3, 2)
 
 
-@MODELS.register_func('SiamUNet-diff_OSCD_model')
-def build_siamunet_diff_oscd_model(C):
-    from models.siamunet_diff import SiamUNet_diff
-    return SiamUNet_diff(13, 2)
-
-
 @MODELS.register_func('SiamUNet-conc_model')
 def build_siamunet_conc_model(C):
     from models.siamunet_conc import SiamUNet_conc
     return SiamUNet_conc(3, 2)
-
-
-@MODELS.register_func('SiamUNet-conc_OSCD_model')
-def build_siamunet_conc_oscd_model(C):
-    from models.siamunet_conc import SiamUNet_conc
-    return SiamUNet_conc(13, 2)
 
 
 @MODELS.register_func('CDNet_model')
