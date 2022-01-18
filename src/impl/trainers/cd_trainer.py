@@ -70,7 +70,7 @@ class CDTrainer(Trainer):
             
     def init_learning_rate(self):
         if not self.sched_on:
-            return super().init_learning_rate()
+            self.lr = super().init_learning_rate()
         else:
             for idx, sched in enumerate(self.schedulers):
                 if self.start_epoch > 0:
@@ -84,18 +84,20 @@ class CDTrainer(Trainer):
                     last_epoch = self.start_epoch
                     while sched.last_epoch < last_epoch:
                         sched.step()
-            return self.optimizer.param_groups[0]['lr']
+            self.lr = self.optimizer.param_groups[0]['lr']
+        return self.lr
 
     def adjust_learning_rate(self, epoch, acc):
         if not self.sched_on:
-            return super().adjust_learning_rate(epoch, acc)
+            self.lr = super().adjust_learning_rate(epoch, acc)
         else:
             for sched in self.schedulers:
                 if isinstance(sched, torch.optim.lr_scheduler.ReduceLROnPlateau):
                     sched.step(acc)
                 else:
                     sched.step()
-            return self.optimizer.param_groups[0]['lr']
+            self.lr = self.optimizer.param_groups[0]['lr']
+        return self.lr
 
     def train_epoch(self, epoch):
         losses = Meter()
