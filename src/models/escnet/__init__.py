@@ -1,7 +1,14 @@
-from .escnet import ESCNet
+from .escnet import ESCNet, ESCNet_Detach, ESCNet_Pixel
 from .utils import FeatureConverter
 
 
-def build_escnet(in_ch, out_ch, n_iters, n_spixels, n_filters, eta_pos, gamma_clr, offsets):
+def build_escnet(arch, in_ch, out_ch, n_iters, n_spixels, n_filters, alpha, eta_pos, gamma_clr, offsets):
     feat_cvrter = FeatureConverter(eta_pos, gamma_clr, offsets)
-    return ESCNet(feat_cvrter, n_iters, n_spixels, n_filters, in_ch, out_ch)
+    if arch == 'full':
+        return ESCNet(feat_cvrter, n_iters, n_spixels, n_filters, in_ch, out_ch, alpha)
+    elif arch == 'nospixel':
+        return ESCNet_Pixel(feat_cvrter, n_iters, n_spixels, n_filters, in_ch, out_ch, alpha)
+    elif arch == 'noe2e':
+        return ESCNet_Detach(feat_cvrter, n_iters, n_spixels, n_filters, in_ch, out_ch, alpha)
+    else:
+        raise ValueError

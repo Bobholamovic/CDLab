@@ -1,0 +1,6 @@
+# WHU+ESCNet-NoE2E
+
+out_dir: escnet-noe2e
+
+escnet_model:
+  arch: noe2e

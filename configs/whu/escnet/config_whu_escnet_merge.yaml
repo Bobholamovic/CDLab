@@ -1,0 +1,5 @@
+# WHU+ESCNet-Merge
+
+out_dir: escnet-merge
+
+merge_on: True

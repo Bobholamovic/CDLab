@@ -11,11 +11,13 @@ criterion: WNLL+Cmpct
 model: ESCNet
 
 escnet_model:
+  arch: full
   in_ch: 5
   out_ch: 20
   n_iters: 5
   n_spixels: 256
   n_filters: 32
+  alpha: 0.01
   eta_pos: 2
   gamma_clr: 0.1
   offsets:

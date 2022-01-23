@@ -1,0 +1,8 @@
+# WHU+ESCNet-NoDS
+
+out_dir: escnet-nods
+
+lambda:
+  - 0.0
+  - 0.01
+  - 0.1

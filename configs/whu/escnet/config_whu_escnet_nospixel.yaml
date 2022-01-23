@@ -1,0 +1,6 @@
+# WHU+ESCNet-NoSPixel
+
+out_dir: escnet-nospixel
+
+escnet_model:
+  arch: nospixel
