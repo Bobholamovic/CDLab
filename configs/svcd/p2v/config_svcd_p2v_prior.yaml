@@ -1,0 +1,5 @@
+# SVCD+P2V-Prior
+
+num_epochs: 20
+out_dir: p2v-prior
+model: P2V-Prior

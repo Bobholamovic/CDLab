@@ -245,3 +245,59 @@ class ESCNet_Detach(ESCNet):
         prob = pf_out
         
         return prob, prob_ds, (Q1,Q2), (ops1,ops2), (f1,f2)
+
+
+class ESCNet_SPixel(ESCNet):
+    def __init__(
+        self, 
+        feat_cvrter,
+        n_iters=10, 
+        n_spixels=100,
+        n_filters=64, in_ch=8, out_ch=16,
+        alpha=0.01
+    ):
+        super().__init__(feat_cvrter, n_iters, n_spixels, n_filters, in_ch, out_ch, alpha)
+        self.fuse_net = nn.Identity()
+
+    def forward(self, f1, f2, merge=False):
+        # Compute Qs
+        Q1, ops1, f1, spf1, pf1 = self.ssn(f1)
+        Q2, ops2, f2, spf2, pf2 = self.ssn(f2)
+
+        Q1_d, Q2_d = Q1.detach(), Q2.detach()
+
+        # Extract pixel-level features
+        # pf means pixel features and hf means hidden-layer features
+        hf = self.cd_net(pf1[:,2:], pf2[:,2:])
+        pf = hf[0]
+
+        # Super-pixelation
+        if merge:
+            # Adaptive superpixel merging
+            b, c, s = spf1.size()
+            
+            spf1.detach_()
+            rels = spf1.unsqueeze(-2) - spf1.unsqueeze(-1)
+            rels = torch.exp(-(rels**2).sum(dim=1, keepdim=True)/self.omega2)
+            coeffs = ops1['map_sp2p'](rels.view(b, s, s), Q1_d).view(b, s, -1)
+            spf1 = torch.matmul(pf.view(b, c, -1), coeffs.transpose(1,2)) / (coeffs.unsqueeze(1).sum(-1)+1e-32)
+
+            spf2.detach_()
+            rels = spf2.unsqueeze(-2) - spf2.unsqueeze(-1)
+            rels = torch.exp(-(rels**2).sum(dim=1, keepdim=True)/self.omega2)
+            coeffs = ops2['map_sp2p'](rels.view(b, s, s), Q2_d).view(b, s, -1)
+            spf2 = torch.matmul(pf.view(b, c, -1), coeffs.transpose(1,2)) / (coeffs.unsqueeze(1).sum(-1)+1e-32)
+            
+            del rels, coeffs
+        else:
+            spf1 = ops1['map_p2sp'](pf, Q1_d)
+            spf2 = ops2['map_p2sp'](pf, Q2_d)
+        
+        pf1 = ops1['map_sp2p'](spf1, Q1_d)
+        pf2 = ops2['map_sp2p'](spf2, Q2_d)
+        pf_sp = pf1 + pf2
+        prob_ds = self.conv_ds(pf_sp)
+        
+        prob = prob_ds
+        
+        return prob, prob_ds, (Q1,Q2), (ops1,ops2), (f1,f2)

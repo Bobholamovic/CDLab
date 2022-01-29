@@ -1,0 +1,10 @@
+# WHU+ESCNet-NoRefine
+
+out_dir: escnet-norefine
+
+escnet_model:
+  arch: norefine
+lambda:
+  - 0.0
+  - 0.01
+  - 0.1

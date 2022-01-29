@@ -428,3 +428,60 @@ class P2VNet_Decouple(P2VNet):
     def __init__(self, in_ch, video_len=8, enc_chs_p=(32,64,128), enc_chs_v=(64,180), dec_chs=(256,128,64,32)):
         super().__init__(in_ch, video_len, enc_chs_p, enc_chs_v, dec_chs)
         self.encoder_v = VideoEncoder_1DOnly(in_ch, enc_chs=enc_chs_v)
+
+
+class P2VNet_Prior(P2VNet):
+    def __init__(self, in_ch, video_len=8, enc_chs_p=(32,64,128), enc_chs_v=(64,128), dec_chs=(256,128,64,32)):
+        super().__init__(in_ch, video_len, enc_chs_p, enc_chs_v, dec_chs)
+        self.prior_model = P2VNet_NoTemporal(3, 8)
+        self.prior_model.load_state_dict(torch.load('../exp/svcd/weights/checkpoint_010_p2v_notemporal.pth')['state_dict'])
+        for p in self.prior_model.parameters():
+            p.requires_grad = False
+    
+    def forward(self, t1, t2, return_aux=False):
+        with torch.no_grad():
+            self.prior_model.eval()
+            prior_map = self.prior_model(t1, t2)
+            rate_map = torch.sigmoid(prior_map*0.1)
+        frames = self.pair_to_video(t1, t2, rate_map)
+        feats_v = self.encoder_v(frames.transpose(1,2))
+        feats_v.pop(0)
+
+        for i, feat in enumerate(feats_v):
+            feats_v[i] = self.convs_video[i](self.tem_aggr(feat))
+
+        feats_p = self.encoder_p(t1, t2, feats_v)
+
+        pred = self.decoder(feats_p[-1], feats_p)
+
+        if return_aux:
+            pred_v = self.conv_out_v(feats_v[-1])
+            pred_v = F.interpolate(pred_v, size=pred.shape[2:])
+            return pred, pred_v
+        else:
+            return pred
+
+
+class P2VNet_CVA(P2VNet):
+    def forward(self, t1, t2, return_aux=False):
+        with torch.no_grad():
+            cv = torch.pow(t1-t2, 2)
+            cv = torch.sqrt(torch.sum(cv, dim=1, keepdims=True))
+            rate_map = (cv - cv.min()) / (cv.max() - cv.min() + 1e-32)
+        frames = self.pair_to_video(t1, t2, rate_map)
+        feats_v = self.encoder_v(frames.transpose(1,2))
+        feats_v.pop(0)
+
+        for i, feat in enumerate(feats_v):
+            feats_v[i] = self.convs_video[i](self.tem_aggr(feat))
+
+        feats_p = self.encoder_p(t1, t2, feats_v)
+
+        pred = self.decoder(feats_p[-1], feats_p)
+
+        if return_aux:
+            pred_v = self.conv_out_v(feats_v[-1])
+            pred_v = F.interpolate(pred_v, size=pred.shape[2:])
+            return pred, pred_v
+        else:
+            return pred

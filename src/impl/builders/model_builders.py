@@ -100,6 +100,18 @@ def build_p2v_2donlyflat_model(C):
     return P2VNet_2DOnlyFlat(**C['p2v_model'])
 
 
+@MODELS.register_func('P2V-Prior_model')
+def build_p2v_prior_model(C):
+    from models.p2v import P2VNet_Prior
+    return P2VNet_Prior(**C['p2v_model'])
+
+
+@MODELS.register_func('P2V-CVA_model')
+def build_p2v_prior_model(C):
+    from models.p2v import P2VNet_CVA
+    return P2VNet_CVA(**C['p2v_model'])
+
+
 @MODELS.register_func('SNUNet_model')
 def build_snunet_model(C):
     from models.snunet import SNUNet_ECAM
