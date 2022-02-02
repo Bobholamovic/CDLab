@@ -9,6 +9,7 @@
 #
 
 # Bilinear interpolation is adopted as the default upsampling method, which is different from the paper.
+# Also, the network initialization method may differ from the original implementation. See src/models/_utils.py.
 
 import torch
 import torch.nn as nn
