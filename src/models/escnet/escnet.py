@@ -148,14 +148,14 @@ class ESCNet(nn.Module):
             
             spf1.detach_()
             rels = spf1.unsqueeze(-2) - spf1.unsqueeze(-1)
-            rels = torch.exp(-(rels**2).sum(dim=1, keepdim=True)/self.omega2)
-            coeffs = ops1['map_sp2p'](rels.view(b, s, s), Q1_d).view(b, s, -1)
+            rels = torch.exp(-(rels**2).sum(dim=1)/self.omega2)
+            coeffs = ops1['map_sp2p'](rels, Q1_d).view(b, s, -1)
             spf1 = torch.matmul(pf.view(b, c, -1), coeffs.transpose(1,2)) / (coeffs.unsqueeze(1).sum(-1)+1e-32)
 
             spf2.detach_()
             rels = spf2.unsqueeze(-2) - spf2.unsqueeze(-1)
-            rels = torch.exp(-(rels**2).sum(dim=1, keepdim=True)/self.omega2)
-            coeffs = ops2['map_sp2p'](rels.view(b, s, s), Q2_d).view(b, s, -1)
+            rels = torch.exp(-(rels**2).sum(dim=1)/self.omega2)
+            coeffs = ops2['map_sp2p'](rels, Q2_d).view(b, s, -1)
             spf2 = torch.matmul(pf.view(b, c, -1), coeffs.transpose(1,2)) / (coeffs.unsqueeze(1).sum(-1)+1e-32)
             
             del rels, coeffs
@@ -219,14 +219,14 @@ class ESCNet_Detach(ESCNet):
             
             spf1.detach_()
             rels = spf1.unsqueeze(-2) - spf1.unsqueeze(-1)
-            rels = torch.exp(-(rels**2).sum(dim=1, keepdim=True)/self.omega2)
-            coeffs = ops1['map_sp2p'](rels.view(b, s, s), Q1_d).view(b, s, -1)
+            rels = torch.exp(-(rels**2).sum(dim=1)/self.omega2)
+            coeffs = ops1['map_sp2p'](rels, Q1_d).view(b, s, -1)
             spf1 = torch.matmul(pf.view(b, c, -1), coeffs.transpose(1,2)) / (coeffs.unsqueeze(1).sum(-1)+1e-32)
 
             spf2.detach_()
             rels = spf2.unsqueeze(-2) - spf2.unsqueeze(-1)
-            rels = torch.exp(-(rels**2).sum(dim=1, keepdim=True)/self.omega2)
-            coeffs = ops2['map_sp2p'](rels.view(b, s, s), Q2_d).view(b, s, -1)
+            rels = torch.exp(-(rels**2).sum(dim=1)/self.omega2)
+            coeffs = ops2['map_sp2p'](rels, Q2_d).view(b, s, -1)
             spf2 = torch.matmul(pf.view(b, c, -1), coeffs.transpose(1,2)) / (coeffs.unsqueeze(1).sum(-1)+1e-32)
             
             del rels, coeffs
@@ -278,14 +278,14 @@ class ESCNet_SPixel(ESCNet):
             
             spf1.detach_()
             rels = spf1.unsqueeze(-2) - spf1.unsqueeze(-1)
-            rels = torch.exp(-(rels**2).sum(dim=1, keepdim=True)/self.omega2)
-            coeffs = ops1['map_sp2p'](rels.view(b, s, s), Q1_d).view(b, s, -1)
+            rels = torch.exp(-(rels**2).sum(dim=1)/self.omega2)
+            coeffs = ops1['map_sp2p'](rels, Q1_d).view(b, s, -1)
             spf1 = torch.matmul(pf.view(b, c, -1), coeffs.transpose(1,2)) / (coeffs.unsqueeze(1).sum(-1)+1e-32)
 
             spf2.detach_()
             rels = spf2.unsqueeze(-2) - spf2.unsqueeze(-1)
-            rels = torch.exp(-(rels**2).sum(dim=1, keepdim=True)/self.omega2)
-            coeffs = ops2['map_sp2p'](rels.view(b, s, s), Q2_d).view(b, s, -1)
+            rels = torch.exp(-(rels**2).sum(dim=1)/self.omega2)
+            coeffs = ops2['map_sp2p'](rels, Q2_d).view(b, s, -1)
             spf2 = torch.matmul(pf.view(b, c, -1), coeffs.transpose(1,2)) / (coeffs.unsqueeze(1).sum(-1)+1e-32)
             
             del rels, coeffs

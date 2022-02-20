@@ -4,5 +4,5 @@ out_dir: escnet-nods
 
 lambda:
   - 0.0
-  - 0.01
-  - 0.1
+  - 1.e-4
+  - 1.0

@@ -8,6 +8,9 @@ schedulers:
 num_epochs: 80
 out_dir: escnet
 criterion: WNLL+Cmpct
+weights:
+- 0.4
+- 0.6
 model: ESCNet
 
 escnet_model:
@@ -18,8 +21,8 @@ escnet_model:
   n_spixels: 256
   n_filters: 32
   alpha: 0.01
-  eta_pos: 2
-  gamma_clr: 0.1
+  eta_pos: 2.5
+  gamma_clr: 0.25
   offsets:
     - 0.0
     - 0.0
@@ -28,6 +31,6 @@ escnet_model:
     - 0.0
 lambda:
   - 0.5
-  - 0.01
-  - 0.1
+  - 1.e-4
+  - 1.0
 merge_on: False

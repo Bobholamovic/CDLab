@@ -17,8 +17,8 @@ escnet_model:
   n_iters: 5
   n_spixels: 256
   n_filters: 32
-  alpha: 0.01
-  eta_pos: 2
+  alpha: 0.004
+  eta_pos: 2.0
   gamma_clr: 0.1
   offsets:
     - 0.0
