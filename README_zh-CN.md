@@ -1,7 +1,5 @@
 # Change Detection Laboratory
 
-*注意，项目仍在开发中，尚未发行稳定版本。*
-
 使用 [PyTorch](https://pytorch.org/) 开发的基于深度学习遥感影像变化检测项目，可作为算法开发、训练框架，也可作为基线测试平台。
 
 *CDLab也拥有 [PaddlePaddle 版本](https://github.com/Bobholamovic/CDLab-PP)。*
@@ -89,41 +87,43 @@ python sw_test.py --exp_config PATH_TO_CONFIG_FILE \
 
 ## 预置模型列表
 
-模型名称 | 对应名称 | 链接
-:-:|:-:|:-:
-CDNet | `CDNet` | [paper](https://doi.org/10.1007/s10514-018-9734-5)
-FC-EF | `UNet` | [paper](https://ieeexplore.ieee.org/abstract/document/8451652)
-FC-Siam-conc | `SiamUNet-conc` | [paper](https://ieeexplore.ieee.org/abstract/document/8451652)
-FC-Siam-diff | `SiamUNet-diff` | [paper](https://ieeexplore.ieee.org/abstract/document/8451652)
-STANet | `STANet` | [paper](https://www.mdpi.com/2072-4292/12/10/1662)
-DSIFN | `IFN` | [paper](https://www.sciencedirect.com/science/article/pii/S0924271620301532)
-SNUNet | `SNUNet` | [paper](https://ieeexplore.ieee.org/document/9355573)
-BIT | `BIT` | [paper](https://ieeexplore.ieee.org/document/9491802)
-L-UNet | `LUNet` | [paper](https://ieeexplore.ieee.org/document/9352207)
-DSAMNet | `DSAMNet` | [paper](https://ieeexplore.ieee.org/document/9467555)
+| 模型名称 | 对应名称 | 链接
+|:-:|:-:|:-:|
+| CDNet | `CDNet` | [paper](https://doi.org/10.1007/s10514-018-9734-5) |
+| FC-EF | `UNet` | [paper](https://ieeexplore.ieee.org/abstract/document/8451652) |
+| FC-Siam-conc | `SiamUNet-conc` | [paper](https://ieeexplore.ieee.org/abstract/document/8451652) |
+| FC-Siam-diff | `SiamUNet-diff` | [paper](https://ieeexplore.ieee.org/abstract/document/8451652) |
+| STANet | `STANet` | [paper](https://www.mdpi.com/2072-4292/12/10/1662) |
+| DSIFN | `IFN` | [paper](https://www.sciencedirect.com/science/article/pii/S0924271620301532) |
+| SNUNet | `SNUNet` | [paper](https://ieeexplore.ieee.org/document/9355573) |
+| BIT | `BIT` | [paper](https://ieeexplore.ieee.org/document/9491802) |
+| L-UNet | `LUNet` | [paper](https://ieeexplore.ieee.org/document/9352207) |
+| DSAMNet | `DSAMNet` | [paper](https://ieeexplore.ieee.org/document/9467555) |
+| P2V-CD | `P2V` | [paper](https://ieeexplore.ieee.org/document/9975266) |
 
 ## 预置数据集列表
 
-数据集名称 | 对应名称 | 链接
-:-:|:-:|:-:
-Synthetic images and real season-varying remote sensing images | `SVCD` | [google drive](https://drive.google.com/file/d/1GX656JqqOyBi_Ef0w65kDGVto-nHrNs9)
-WHU building change detection dataset | `WHU` | [website](http://study.rsgis.whu.edu.cn/pages/download/building_dataset.html)
-LEVIR building change detection dataset | `LEVIRCD` | [website](https://justchenhao.github.io/LEVIR/)
+| 数据集名称 | 对应名称 | 链接 |
+|:-:|:-:|:-:|
+| Synthetic images and real season-varying remote sensing images | `SVCD` | [google drive](https://drive.google.com/file/d/1GX656JqqOyBi_Ef0w65kDGVto-nHrNs9) |
+| WHU building change detection dataset | `WHU` | [website](http://study.rsgis.whu.edu.cn/pages/download/building_dataset.html) |
+| LEVIR building change detection dataset | `LEVIRCD` | [website](https://justchenhao.github.io/LEVIR/) |
 
 ## SVCD 数据集上测试结果
 
-Model | Precision | Recall | F1 | OA
-:-:|:-:|:-:|:-:|:-:
-CDNet | 92.99 | 87.08 | 89.94 | 97.59
-FC-EF | 94.28 | 83.80 | 88.73 | 97.37
-FC-Siam-conc | 94.57 | 91.34 | 92.93 | 98.28
-FC-Siam-diff | 95.87 | 90.60 | 93.16 | 98.36
-STANet | 89.22 | 98.25 | 93.52 | 98.32
-DSIFN | 97.64 | 96.35 | 96.99 | 99.26
-SNUNet | 97.89 | 97.25 | 97.57 | 99.40
-BIT | 97.20 | 96.38 | 96.79 | 99.21
-L-UNet | 96.48 | 94.79 | 95.63 | 98.93
-DSAMNet | 92.78 | 98.06 | 95.35 | 98.82
+| 模型 | Precision | Recall | F1 | OA |
+|:-:|:-:|:-:|:-:|:-:|
+| CDNet | 92.99 | 87.08 | 89.94 | 97.59 |
+| FC-EF | 94.28 | 83.80 | 88.73 | 97.37 |
+| FC-Siam-conc | 94.57 | 91.34 | 92.93 | 98.28 |
+| FC-Siam-diff | 95.87 | 90.60 | 93.16 | 98.36 |
+| STANet | 89.22 | 98.25 | 93.52 | 98.32 |
+| DSIFN | 97.64 | 96.35 | 96.99 | 99.26 |
+| SNUNet | 97.89 | 97.25 | 97.57 | 99.40 |
+| BIT | 97.20 | 96.38 | 96.79 | 99.21 |
+| L-UNet | 96.48 | 94.79 | 95.63 | 98.93 |
+| DSAMNet | 92.78 | 98.06 | 95.35 | 98.82 |
+| P2V-CD | 98.57 | 98.26 | 98.42 | |
 
 ## 开发指南
 
